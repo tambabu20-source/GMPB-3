@@ -328,7 +328,7 @@
     }
 
     .chart.progress-percent-chart {
-      height: 340px;
+      height: 560px;
     }
 
     .chart.summary-status-chart {
@@ -1689,26 +1689,35 @@
         svg.innerHTML = `<rect x="0" y="0" width="420" height="${height}" fill="transparent"/>${rows}`;
         return;
       }
-      svg.setAttribute("viewBox", "0 0 900 430");
-      const rows = sorted.map((project, i) => {
-        const y = 32 + i * 45;
+      let cursor = 24;
+      const rows = sorted.map(project => {
+        const nameLines = wrapSvgText(chartProjectName(project.name), 92);
+        const y = cursor;
+        const barY = y + nameLines.length * 15 + 9;
+        const metricY = barY + 32;
         const known = Number.isFinite(project.progress);
-        const barW = 300;
+        const barW = 640;
         const w = known ? Math.max(4, project.progress / 100 * barW) : barW;
         const fill = known ? colors.public : colors.unknown;
         const ratio = compactAreaRatio(project);
-        const deadline = compactDeadline(project.deadline);
+        const deadline = chartDeadline(project);
         const percentText = known ? `${project.progress.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%` : "Chưa có %";
+        const title = nameLines.map((line, index) => `<tspan x="22" dy="${index ? 15 : 0}">${escapeHtml(line)}</tspan>`).join("");
+        cursor = metricY + 24;
         return `
-          <text x="22" y="${y}" font-size="11.5" fill="${colors.text}" font-weight="700">${escapeHtml(clipLabel(shortName(project.name), 60))}</text>
-          <rect x="430" y="${y - 14}" width="${barW}" height="18" rx="7" fill="#e7edf2"/>
-          <rect x="430" y="${y - 14}" width="${w}" height="18" rx="7" fill="${fill}"/>
-          <text x="748" y="${y}" font-size="11.5" fill="${colors.text}" font-weight="800">${percentText}</text>
-          ${ratio ? `<text x="790" y="${y}" font-size="11.5" fill="${colors.ratio}" font-weight="800">(${escapeHtml(ratio)})</text>` : ""}
-          ${deadline ? `<text x="748" y="${y + 17}" font-size="11" fill="#1d4ed8" font-weight="800">- mốc HT: ${escapeHtml(deadline)}</text>` : ""}
+          <text x="22" y="${y}" font-size="11.5" fill="${colors.text}" font-weight="700">${title}</text>
+          <rect x="22" y="${barY}" width="${barW}" height="18" rx="7" fill="#e7edf2"/>
+          <rect x="22" y="${barY}" width="${w}" height="18" rx="7" fill="${fill}"/>
+          <text x="22" y="${metricY}" font-size="11.2" font-weight="800">
+            <tspan fill="${colors.text}">${percentText}</tspan>
+            ${ratio ? `<tspan dx="4" fill="${colors.ratio}">(${escapeHtml(ratio)})</tspan>` : ""}
+            ${deadline ? `<tspan dx="5" fill="#1d4ed8">- mốc HT: ${escapeHtml(deadline)}</tspan>` : ""}
+          </text>
         `;
       }).join("");
-      svg.innerHTML = `<rect x="0" y="0" width="900" height="430" fill="transparent"/>${rows}`;
+      const height = Math.max(430, cursor + 8);
+      svg.setAttribute("viewBox", `0 0 900 ${height}`);
+      svg.innerHTML = `<rect x="0" y="0" width="900" height="${height}" fill="transparent"/>${rows}`;
     }
 
     ["q", "fundFilter", "ownerFilter"].forEach(id => {
