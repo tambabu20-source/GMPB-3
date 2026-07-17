@@ -115,6 +115,11 @@ def main() -> int:
         html = html.replace(old, new)
 
     html = html.replace(
+        "      .chart.progress-percent-chart {\n        height: 820px;\n      }",
+        "      .chart.progress-percent-chart {\n        height: 980px;\n      }",
+    )
+
+    html = html.replace(
         '${project.deadline ? `<span class="pill">Hoàn thành: ${project.deadline}</span>` : ""}',
         '${project.deadline ? `<span class="pill deadline-pill">Dự kiến hoàn thành: ${project.deadline}</span>` : ""}',
     )
@@ -159,15 +164,16 @@ def main() -> int:
         return a.order - b.order;
       });
       if (mobile) {
-        svg.setAttribute("viewBox", "0 0 420 940");
+        svg.setAttribute("viewBox", "0 0 420 1160");
         const rows = sorted.map((project, i) => {
-          const y = 24 + i * 102;
+          const y = 24 + i * 124;
           const known = Number.isFinite(project.progress);
           const barW = 384;
           const w = known ? Math.max(4, project.progress / 100 * barW) : barW;
           const fill = known ? colors.public : colors.unknown;
           const ratio = compactAreaRatio(project);
           const deadline = compactDeadline(project.deadline);
+          const deadlineY = ratio ? y + 100 : y + 76;
           const percentText = known ? `${project.progress.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%` : "Chưa có %";
           return `
             <text x="18" y="${y}" font-size="12.8" fill="${colors.text}" font-weight="700">${escapeHtml(clipLabel(shortName(project.name), 52))}</text>
@@ -175,10 +181,10 @@ def main() -> int:
             <rect x="18" y="${y + 12}" width="${w}" height="20" rx="7" fill="${fill}"/>
             <text x="18" y="${y + 54}" font-size="14" fill="${colors.text}" font-weight="800">${percentText}</text>
             ${ratio ? `<text x="18" y="${y + 74}" font-size="12.8" fill="${colors.ratio}" font-weight="800">(${escapeHtml(ratio)})</text>` : ""}
-            ${deadline ? `<text x="18" y="${y + 94}" font-size="12.4" fill="#1d4ed8" font-weight="800">- mốc HT: ${escapeHtml(deadline)}</text>` : ""}
+            ${deadline ? `<text x="18" y="${deadlineY}" font-size="12.4" fill="#1d4ed8" font-weight="800">- mốc HT: ${escapeHtml(deadline)}</text>` : ""}
           `;
         }).join("");
-        svg.innerHTML = `<rect x="0" y="0" width="420" height="940" fill="transparent"/>${rows}`;
+        svg.innerHTML = `<rect x="0" y="0" width="420" height="1160" fill="transparent"/>${rows}`;
         return;
       }
       svg.setAttribute("viewBox", "0 0 900 430");
