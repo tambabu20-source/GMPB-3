@@ -1475,6 +1475,7 @@
         const percent = Number.isFinite(project.progress)
           ? `${project.progress.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%`
           : (project.remainingRate ? `Còn lại: ${project.remainingRate}` : "Chưa có tỷ lệ");
+        const deadlineLabel = chartDeadline(project);
         const width = Number.isFinite(project.progress) ? `${project.progress}%` : "0%";
         const statusClass = Number.isFinite(project.progress) && project.progress >= 90 ? "ok" : "";
         const article = document.createElement("article");
@@ -1486,7 +1487,7 @@
             <div class="meta">
               <span class="pill${fundClass}">${project.fund}</span>
               <span class="pill">${project.owner}</span>
-              ${project.deadline ? `<span class="pill deadline-pill">Dự kiến hoàn thành: ${project.deadline}</span>` : ""}
+              ${deadlineLabel ? `<span class="pill deadline-pill">Dự kiến hoàn thành: ${deadlineLabel}</span>` : ""}
               ${project.remainingRate ? `<span class="pill">Còn lại: ${project.remainingRate}</span>` : ""}
             </div>
             <details class="source-detail">
@@ -1496,7 +1497,7 @@
           </div>
           <div class="progress-panel ${hasSingleRate ? "" : "no-rate"}" aria-label="Tiến độ GPMB">
             <div class="progress-row"><span class="progress-label">Tiến độ GPMB</span><strong>${percent}</strong>${areaRatio ? `<span class="area-ratio">Đã GPMB ${areaRatio}</span>` : ""}</div>
-            ${project.deadline ? `<div class="progress-deadline"><span>Dự kiến hoàn thành</span><strong>${project.deadline}</strong></div>` : ""}
+            ${deadlineLabel ? `<div class="progress-deadline"><span>Dự kiến hoàn thành</span><strong>${deadlineLabel}</strong></div>` : ""}
             <div class="bar"><div class="fill ${hasSingleRate ? "" : "pending"}" style="--p:${width}"></div></div>
             <div class="status ${statusClass}">${hasSingleRate ? `Theo số liệu đến ngày ${dataUpdatedDate}` : "Chưa có tỷ lệ % GPMB"}</div>
           </div>
