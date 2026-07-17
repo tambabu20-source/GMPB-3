@@ -5,6 +5,10 @@ on:
     # 16:00 hằng ngày theo giờ Việt Nam (UTC+7) = 09:00 UTC.
     - cron: "0 9 * * *"
   workflow_dispatch:
+  push:
+    paths:
+      - "work/latest_progress_data.json"
+      - "update_dashboard_from_progress_json.py"
 
 permissions:
   contents: write
@@ -21,8 +25,13 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Cập nhật dashboard từ Google Drive
-        run: python update_dashboard_from_drive.py --index index.html
+      - name: Cập nhật dashboard từ dữ liệu mới hoặc Google Drive
+        run: |
+          if [ -f work/latest_progress_data.json ]; then
+            python update_dashboard_from_progress_json.py --index index.html --data work/latest_progress_data.json
+          else
+            python update_dashboard_from_drive.py --index index.html
+          fi
 
       - name: Commit nếu có số liệu mới
         run: |
