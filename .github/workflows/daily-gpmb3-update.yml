@@ -27,7 +27,7 @@ jobs:
 
       - name: Cập nhật dashboard từ dữ liệu mới hoặc Google Drive
         run: |
-          if [ -f work/latest_progress_data.json ]; then
+          if [ "${{ github.event_name }}" = "push" ] && [ -f work/latest_progress_data.json ]; then
             python update_dashboard_from_progress_json.py --index index.html --data work/latest_progress_data.json
           else
             python update_dashboard_from_drive.py --index index.html
