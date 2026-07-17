@@ -45,6 +45,12 @@ def main() -> int:
     html = re.sub(r'<div class="mini-metric"><span>Bình quân 8 dự án có %</span><b>[^<]+</b></div>', f'<div class="mini-metric"><span>Bình quân 8 dự án có %</span><b>{summary["average"]}</b></div>', html)
     html = re.sub(r'<div class="mini-metric"><span>Chưa có tỷ lệ %</span><b>[^<]+</b></div>', f'<div class="mini-metric"><span>Chưa có tỷ lệ %</span><b>{summary["unknown"]}</b></div>', html)
 
+    chart_hint = (
+        f'Các biểu đồ dùng dữ liệu từ file “PL Tien do (TB ket luan 326TB-UBND).xlsx” '
+        f'và phụ lục tiến độ kèm Thông báo kết luận số 326/TB-UBND ngày {data["dataUpdatedDate"]}.'
+    )
+    html = replace_once(r'Các biểu đồ dùng dữ liệu từ .*?</p>', chart_hint + '</p>', html, flags=re.S)
+
     html = replace_once(r'<span class="hint">Nguồn .*?</span>', f'<span class="hint">{data["sourceNote"]}</span>', html, flags=re.S)
 
     index_path.write_text(html, encoding="utf-8")
