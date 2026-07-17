@@ -1517,6 +1517,33 @@
         .trim();
     }
 
+
+    function chartProjectName(name) {
+      const cleaned = name
+        .replace(/^Dự án\s+/i, "")
+        .replace(/\s*\(.*?\)/g, "")
+        .replace(/ tỉnh Đắk Lắk| tỉnh Phú Yên| thành phố Tuy Hòa| thành phố Tuy Hoà/g, "")
+        .trim();
+      return cleaned.charAt(0).toLocaleUpperCase("vi-VN") + cleaned.slice(1);
+    }
+
+    function wrapSvgText(text, maxChars = 52) {
+      const words = text.split(/\s+/).filter(Boolean);
+      const lines = [];
+      let line = "";
+      words.forEach(word => {
+        const next = line ? `${line} ${word}` : word;
+        if (next.length > maxChars && line) {
+          lines.push(line);
+          line = word;
+        } else {
+          line = next;
+        }
+      });
+      if (line) lines.push(line);
+      return lines;
+    }
+
     function clipLabel(text, max = 34) {
       return text.length > max ? `${text.slice(0, max - 3)}...` : text;
     }
@@ -1528,6 +1555,24 @@
       if (!dates) return deadline.replace(/^Trước\s+/i, "").trim();
       const unique = [...new Set(dates.map(date => date.replace(/\/2026$/, "")))];
       return unique.join("; ");
+    }
+
+
+    function chartDeadline(project) {
+      const deadline = compactDeadline(project.deadline);
+      if (!deadline) return "";
+      const summaries = {
+        1: "15/8(HT);25/7(TĐC);30/7(PA);10/8(BV);5/8(GP)",
+        3: "20/8(HT)",
+        4: "30/7(PA);15/8(HT)",
+        5: "30/7(PA);15/8(HT)",
+        6: "21/8(95%)"
+      };
+      if (summaries[project.order]) return summaries[project.order];
+      const normalized = deadline.replace(/\/2026/g, "");
+      return normalized.includes(";")
+        ? normalized.split(";").map(item => `${item.trim()}(HT)`).join(";")
+        : `${normalized}(HT)`;
     }
 
     function isMobileChart() {
@@ -1613,27 +1658,35 @@
         return a.order - b.order;
       });
       if (mobile) {
-        svg.setAttribute("viewBox", "0 0 420 1160");
-        const rows = sorted.map((project, i) => {
-          const y = 24 + i * 124;
+        let cursor = 24;
+        const rows = sorted.map(project => {
+          const nameLines = wrapSvgText(chartProjectName(project.name), 52);
+          const y = cursor;
+          const barY = y + nameLines.length * 16 + 10;
+          const metricY = barY + 43;
           const known = Number.isFinite(project.progress);
           const barW = 384;
           const w = known ? Math.max(4, project.progress / 100 * barW) : barW;
           const fill = known ? colors.public : colors.unknown;
           const ratio = compactAreaRatio(project);
-          const deadline = compactDeadline(project.deadline);
-          const deadlineY = ratio ? y + 100 : y + 76;
+          const deadline = chartDeadline(project);
           const percentText = known ? `${project.progress.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%` : "Chưa có %";
+          const title = nameLines.map((line, index) => `<tspan x="18" dy="${index ? 16 : 0}">${escapeHtml(line)}</tspan>`).join("");
+          cursor = metricY + 24;
           return `
-            <text x="18" y="${y}" font-size="12.8" fill="${colors.text}" font-weight="700">${escapeHtml(clipLabel(shortName(project.name), 52))}</text>
-            <rect x="18" y="${y + 12}" width="${barW}" height="20" rx="7" fill="#e7edf2"/>
-            <rect x="18" y="${y + 12}" width="${w}" height="20" rx="7" fill="${fill}"/>
-            <text x="18" y="${y + 54}" font-size="14" fill="${colors.text}" font-weight="800">${percentText}</text>
-            ${ratio ? `<text x="18" y="${y + 74}" font-size="12.8" fill="${colors.ratio}" font-weight="800">(${escapeHtml(ratio)})</text>` : ""}
-            ${deadline ? `<text x="18" y="${deadlineY}" font-size="12.4" fill="#1d4ed8" font-weight="800">- mốc HT: ${escapeHtml(deadline)}</text>` : ""}
+            <text x="18" y="${y}" font-size="12.3" fill="${colors.text}" font-weight="700">${title}</text>
+            <rect x="18" y="${barY}" width="${barW}" height="20" rx="7" fill="#e7edf2"/>
+            <rect x="18" y="${barY}" width="${w}" height="20" rx="7" fill="${fill}"/>
+            <text x="18" y="${metricY}" font-size="8.8" font-weight="800">
+              <tspan fill="${colors.text}">${percentText}</tspan>
+              ${ratio ? `<tspan dx="4" fill="${colors.ratio}">(${escapeHtml(ratio)})</tspan>` : ""}
+              ${deadline ? `<tspan dx="5" fill="#1d4ed8">- mốc HT: ${escapeHtml(deadline)}</tspan>` : ""}
+            </text>
           `;
         }).join("");
-        svg.innerHTML = `<rect x="0" y="0" width="420" height="1160" fill="transparent"/>${rows}`;
+        const height = Math.max(420, cursor + 8);
+        svg.setAttribute("viewBox", `0 0 420 ${height}`);
+        svg.innerHTML = `<rect x="0" y="0" width="420" height="${height}" fill="transparent"/>${rows}`;
         return;
       }
       svg.setAttribute("viewBox", "0 0 900 430");
