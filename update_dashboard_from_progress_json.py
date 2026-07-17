@@ -262,6 +262,24 @@ def main() -> int:
             html,
         )
 
+    chart_deadline = '''    function chartDeadline(project) {
+      const deadline = compactDeadline(project.deadline);
+      if (!deadline) return "";
+      const summaries = {
+        1: "15/8(HT);25/7(TĐC);30/7(PA);10/8(BV);5/8(GP)",
+        3: "20/8",
+        4: "30/7(PA);15/8(HT)",
+        5: "30/7(PA);15/8(HT)",
+        6: "21/8(95%)"
+      };
+      if (summaries[project.order]) return summaries[project.order];
+      const normalized = deadline.replace(/\\/2026/g, "");
+      return normalized.includes(";")
+        ? normalized.split(";").map(item => `${item.trim()}(HT)`).join(";")
+        : normalized;
+    }'''
+    html = replace_once(r'    function chartDeadline\(project\) \{[\s\S]*?\n    \}', chart_deadline, html)
+
     progress_chart = '''    function drawProgressPercentChart() {
       const svg = document.getElementById("progressPercentChart");
       const mobile = isMobileChart();
