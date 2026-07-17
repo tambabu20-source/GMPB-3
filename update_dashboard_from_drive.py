@@ -9,9 +9,9 @@ import urllib.request
 import zipfile
 from datetime import timezone, timedelta
 from email.utils import parsedate_to_datetime
-from io import BytesIO
 from pathlib import Path
 from xml.etree import ElementTree as ET
+
 
 FILE_ID = "1iJlA3Gs1eUH-q1qywqiiHf-c778PPYW-"
 DEFAULT_DRIVE_URL = f"https://drive.google.com/uc?export=download&id={FILE_ID}"
@@ -26,6 +26,10 @@ def download_docx(url: str) -> tuple[bytes, str | None]:
 
 def docx_lines(data: bytes) -> list[str]:
     ns = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
+    with zipfile.ZipFile(Path("/tmp/gpmb-source.docx"), "w") as _:
+        pass
+    from io import BytesIO
+
     with zipfile.ZipFile(BytesIO(data)) as zf:
         xml = zf.read("word/document.xml")
     root = ET.fromstring(xml)
@@ -49,6 +53,15 @@ def compact_date(last_modified: str | None) -> str:
         return ""
     dt = parsedate_to_datetime(last_modified).astimezone(VN_TZ)
     return f"{dt.day}/{dt.month}/{dt.year}"
+
+
+def parse_compact_date(value: str | None):
+    if not value:
+        return None
+    m = re.search(r"(\d{1,2})/(\d{1,2})/(\d{4})", value)
+    if not m:
+        return None
+    return int(m.group(3)), int(m.group(2)), int(m.group(1))
 
 
 def iso_modified(last_modified: str | None) -> str | None:
@@ -75,10 +88,11 @@ def replace_projects(html: str, projects: list[dict], data_date: str) -> str:
     payload = json.dumps(projects, ensure_ascii=False, indent=6)
     html = re.sub(
         r"    const projects = \[[\s\S]*?\n\s*\];\n\n    const dataUpdatedDate",
-        "    const projects = " + payload.replace("\n", "\n    ") + ";\n\n    const dataUpdatedDate",
+        "    const projects = " + "\n    ".join(payload.splitlines()) + ";\n\n    const dataUpdatedDate",
         html,
     )
-    return re.sub(r'const dataUpdatedDate = "[^"]+";', f'const dataUpdatedDate = "{data_date}";', html)
+    html = re.sub(r'const dataUpdatedDate = "[^"]+";', f'const dataUpdatedDate = "{data_date}";', html)
+    return html
 
 
 def block_for(lines: list[str], name: str, next_name: str | None) -> list[str]:
@@ -101,35 +115,54 @@ def clean(value: str) -> str:
     return re.sub(r"\s+", " ", value.replace(" ", " ")).strip()
 
 
-def update_from_table(projects: list[dict], lines: list[str]) -> bool:
-    by_order = {p["order"]: p for p in projects}
+def normalize(value: str) -> str:
+    import unicodedata
+
+    value = str(value or "").replace("Đ", "D").replace("đ", "d")
+    value = unicodedata.normalize("NFD", value.lower())
+    return "".join(ch for ch in value if unicodedata.category(ch) != "Mn")
+
+
+def find_project(projects: list[dict], keyword: str) -> dict | None:
+    keyword = normalize(keyword)
+    for project in projects:
+        haystack = normalize(" ".join([project.get("name", ""), project.get("owner", ""), project.get("info", "")]))
+        if keyword in haystack:
+            return project
+    return None
+
+
+def update_from_table(projects: list[dict], lines: list[str], data_date: str) -> bool:
     changed = False
+
     specs = {
-        1: ("Dự án Tuyến đường bộ ven biển tỉnh Phú Yên", "Dự án Tuyến đường bộ ven biển đoạn phía Bắc cầu An Hải", r"14,67\s*km"),
-        2: ("Dự án Tuyến đường bộ ven biển đoạn phía Bắc cầu An Hải", "Dự án Tuyến đường bộ ven biển tỉnh Đắk Lắk", r"7,48\s*km"),
-        3: ("Dự án Tuyến đường bộ ven biển tỉnh Đắk Lắk", "Tuyến đường giao thông từ Cảng Bãi Gốc", r"211\.443\s*m2"),
-        4: ("Tuyến đường giao thông từ Cảng Bãi Gốc", "Dự án đầu tư xây dựng đường bộ cao tốc", r"41,32\s*ha"),
-        6: ("Dự án Khu công viên trung tâm", "Dự án Hạ tầng kỹ thuật khu dân cư", r"14,59\s*ha"),
-        7: ("Dự án Hạ tầng kỹ thuật khu dân cư", "Đầu tư xây dựng và kinh doanh kết cấu hạ tầng", r"23,79\s*ha"),
-        8: ("Đầu tư xây dựng và kinh doanh kết cấu hạ tầng", "Khu nhà ở xã hội xã An Phú", r"262,25\s*ha"),
-        9: ("Khu nhà ở xã hội xã An Phú", None, r"6,68162\s*ha"),
+        1: ("Dự án Tuyến đường bộ ven biển tỉnh Phú Yên", "Dự án Tuyến đường bộ ven biển đoạn phía Bắc cầu An Hải", r"14,67\s*km", "tuy an - thanh pho tuy hoa"),
+        2: ("Dự án Tuyến đường bộ ven biển đoạn phía Bắc cầu An Hải", "Dự án Tuyến đường bộ ven biển tỉnh Đắk Lắk", r"7,48\s*km", "bac cau an hai"),
+        3: ("Dự án Tuyến đường bộ ven biển tỉnh Đắk Lắk", "Tuyến đường giao thông từ Cảng Bãi Gốc", r"211\.443\s*m2", "xuan dai"),
+        4: ("Tuyến đường giao thông từ Cảng Bãi Gốc", "Dự án đầu tư xây dựng đường bộ cao tốc", r"41,32\s*ha", "cang bai goc"),
+        6: ("Dự án Khu công viên trung tâm", "Dự án Hạ tầng kỹ thuật khu dân cư", r"14,59\s*ha", "khu cong vien trung tam"),
+        7: ("Dự án Hạ tầng kỹ thuật khu dân cư", "Đầu tư xây dựng và kinh doanh kết cấu hạ tầng", r"23,79\s*ha", "ha tang ky thuat khu dan cu"),
+        8: ("Đầu tư xây dựng và kinh doanh kết cấu hạ tầng", "Khu nhà ở xã hội xã An Phú", r"262,25\s*ha", "khu cong nghiep hoa tam"),
+        9: ("Khu nhà ở xã hội xã An Phú", None, r"6,68162\s*ha", "an phu"),
     }
 
-    for order, (name, next_name, total_rx) in specs.items():
+    for order, (name, next_name, total_rx, project_key) in specs.items():
         block = block_for(lines, name, next_name)
-        if not block or order not in by_order:
+        project = find_project(projects, project_key)
+        if not block or project is None:
             continue
         total_idx = find_line(block, total_rx)
         if total_idx < 0:
             continue
-        project = by_order[order]
+
         old = json.dumps(project, ensure_ascii=False, sort_keys=True)
 
         if order == 1:
+            cleared = " ".join(block[total_idx + 1 : total_idx + 3])
             project["totalArea"] = "14,67 km"
-            project["clearedArea"] = clean(" ".join(block[total_idx + 1 : total_idx + 3]))
-            project["remainingArea"] = clean(block[total_idx + 3]) if total_idx + 3 < len(block) else project.get("remainingArea", "")
-            project["remainingRate"] = clean(block[total_idx + 4]) if total_idx + 4 < len(block) else project.get("remainingRate", "")
+            project["clearedArea"] = clean(cleared)
+            project["remainingArea"] = clean(block[total_idx + 3])
+            project["remainingRate"] = clean(block[total_idx + 4])
         else:
             project["totalArea"] = clean(block[total_idx])
             project["clearedArea"] = clean(block[total_idx + 1]) if total_idx + 1 < len(block) else project.get("clearedArea", "")
@@ -142,6 +175,7 @@ def update_from_table(projects: list[dict], lines: list[str]) -> bool:
         if order == 3:
             progress = 0
         if order == 8:
+            # Source column is inconsistent for project 8; calculate from cleared / total.
             progress = 8.62
         if order == 9:
             progress = 86.6
@@ -151,14 +185,18 @@ def update_from_table(projects: list[dict], lines: list[str]) -> bool:
         after_rate = total_idx + 4
         deadline_idx = find_line(block, r"(Trước ngày|trước ngày|Đang thực hiện|Hoàn thành trước|- Khu vực)", after_rate)
         if deadline_idx > after_rate:
-            project["issues"] = clean(" ".join(block[after_rate:deadline_idx])[:1800])
+            body = " ".join(block[after_rate:deadline_idx])
+            project["issues"] = clean(body[:1800])
             project["deadline"] = clean(" ".join(block[deadline_idx : min(deadline_idx + 2, len(block))]))
 
         if old != json.dumps(project, ensure_ascii=False, sort_keys=True):
             changed = True
 
-    if 5 in by_order:
-        by_order[5]["progress"] = None
+    # CT.02 has no quantitative GPMB data in the Drive table.
+    ct02 = find_project(projects, "ct.02")
+    if ct02:
+        ct02["progress"] = None
+
     return changed
 
 
@@ -203,9 +241,18 @@ def main() -> int:
     html = index_path.read_text(encoding="utf-8")
     projects = extract_projects(html)
     data, last_modified = download_docx(args.drive_url)
-    data_date = compact_date(last_modified) or re.search(r'const dataUpdatedDate = "([^"]+)"', html).group(1)
-    changed = update_from_table(projects, docx_lines(data))
-    new_html = update_summary(replace_projects(html, projects, data_date), projects, data_date, last_modified)
+    lines = docx_lines(data)
+    current_match = re.search(r'const dataUpdatedDate = "([^"]+)"', html)
+    current_data_date = current_match.group(1) if current_match else ""
+    data_date = compact_date(last_modified) or current_data_date
+    if parse_compact_date(data_date) and parse_compact_date(current_data_date):
+        if parse_compact_date(data_date) < parse_compact_date(current_data_date):
+            print(f"Nguồn Drive ngày {data_date} cũ hơn dashboard hiện tại {current_data_date}; bỏ qua để không ghi đè lùi dữ liệu.")
+            return 0
+
+    changed = update_from_table(projects, lines, data_date)
+    new_html = replace_projects(html, projects, data_date)
+    new_html = update_summary(new_html, projects, data_date, last_modified)
 
     if changed or new_html != html:
         index_path.write_text(new_html, encoding="utf-8")
