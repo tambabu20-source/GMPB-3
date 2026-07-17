@@ -135,6 +135,19 @@ def main() -> int:
         '${project.deadline ? `<span class="pill deadline-pill">Dự kiến hoàn thành GPMB: ${project.deadline}</span>` : ""}',
         '${project.deadline ? `<span class="pill deadline-pill">Dự kiến hoàn thành: ${project.deadline}</span>` : ""}',
     )
+    if "const deadlineLabel = chartDeadline(project);" not in html:
+        html = html.replace(
+            '        const width = Number.isFinite(project.progress) ? `${project.progress}%` : "0%";',
+            '        const deadlineLabel = chartDeadline(project);\n        const width = Number.isFinite(project.progress) ? `${project.progress}%` : "0%";',
+        )
+    html = html.replace(
+        '${project.deadline ? `<span class="pill deadline-pill">Dự kiến hoàn thành: ${project.deadline}</span>` : ""}',
+        '${deadlineLabel ? `<span class="pill deadline-pill">Dự kiến hoàn thành: ${deadlineLabel}</span>` : ""}',
+    )
+    html = html.replace(
+        '${project.deadline ? `<div class="progress-deadline"><span>Dự kiến hoàn thành</span><strong>${project.deadline}</strong></div>` : ""}',
+        '${deadlineLabel ? `<div class="progress-deadline"><span>Dự kiến hoàn thành</span><strong>${deadlineLabel}</strong></div>` : ""}',
+    )
     html = html.replace(
         '<div class="progress-row"><span class="progress-label">Tiến độ GPMB</span><strong>${percent}</strong>${areaRatio ? `<span class="area-ratio">Đã GPMB ${areaRatio}</span>` : ""}</div>\n            <div class="bar">',
         '<div class="progress-row"><span class="progress-label">Tiến độ GPMB</span><strong>${percent}</strong>${areaRatio ? `<span class="area-ratio">Đã GPMB ${areaRatio}</span>` : ""}</div>\n            ${project.deadline ? `<div class="progress-deadline"><span>Dự kiến hoàn thành</span><strong>${project.deadline}</strong></div>` : ""}\n            <div class="bar">',
@@ -142,6 +155,10 @@ def main() -> int:
     html = html.replace(
         '<div class="progress-row"><span class="progress-label">Tiến độ GPMB</span><strong>${percent}</strong>${areaRatio ? `<span class="area-ratio">Đã GPMB ${areaRatio}</span>` : ""}</div>\n            ${project.deadline ? `<div class="progress-deadline"><span>Dự kiến hoàn thành GPMB</span><strong>${project.deadline}</strong></div>` : ""}\n            <div class="bar">',
         '<div class="progress-row"><span class="progress-label">Tiến độ GPMB</span><strong>${percent}</strong>${areaRatio ? `<span class="area-ratio">Đã GPMB ${areaRatio}</span>` : ""}</div>\n            ${project.deadline ? `<div class="progress-deadline"><span>Dự kiến hoàn thành</span><strong>${project.deadline}</strong></div>` : ""}\n            <div class="bar">',
+    )
+    html = html.replace(
+        '${project.deadline ? `<div class="progress-deadline"><span>Dự kiến hoàn thành</span><strong>${project.deadline}</strong></div>` : ""}',
+        '${deadlineLabel ? `<div class="progress-deadline"><span>Dự kiến hoàn thành</span><strong>${deadlineLabel}</strong></div>` : ""}',
     )
 
     if "function compactDeadline" not in html:
