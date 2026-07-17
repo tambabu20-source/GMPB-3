@@ -14,6 +14,13 @@ def replace_once(pattern: str, repl: str, text: str, flags: int = 0) -> str:
     return new_text
 
 
+def insert_after_once(pattern: str, insert: str, text: str, flags: int = 0) -> str:
+    new_text, count = re.subn(pattern, lambda match: match.group(0) + insert, text, count=1, flags=flags)
+    if count != 1:
+        raise SystemExit(f"Không tìm thấy đúng 01 vùng cần chèn: {pattern[:80]}")
+    return new_text
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Cập nhật dashboard GPMB từ JSON tiến độ đã chuẩn hóa.")
     parser.add_argument("--index", default="index.html")
@@ -44,6 +51,136 @@ def main() -> int:
     html = re.sub(r'<div class="mini-metric"><span>Đạt từ 90% trở lên</span><b>[^<]+</b></div>', f'<div class="mini-metric"><span>Đạt từ 90% trở lên</span><b>{summary["above90"]}</b></div>', html)
     html = re.sub(r'<div class="mini-metric"><span>Bình quân 8 dự án có %</span><b>[^<]+</b></div>', f'<div class="mini-metric"><span>Bình quân 8 dự án có %</span><b>{summary["average"]}</b></div>', html)
     html = re.sub(r'<div class="mini-metric"><span>Chưa có tỷ lệ %</span><b>[^<]+</b></div>', f'<div class="mini-metric"><span>Chưa có tỷ lệ %</span><b>{summary["unknown"]}</b></div>', html)
+
+    if ".pill.deadline-pill" not in html:
+        html = insert_after_once(
+            r'\n    \.pill\.private-fund \{[\s\S]*?\n    \}\n',
+            '''
+    .pill.deadline-pill {
+      border-color: #e3a12c;
+      background: #fff3cc;
+      color: #7a3300;
+      font-weight: 800;
+    }
+''',
+            html,
+        )
+
+    if ".progress-deadline" not in html:
+        html = insert_after_once(
+            r'\n    \.progress-row \.area-ratio \{[\s\S]*?\n    \}\n',
+            '''
+    .progress-deadline {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 5px 7px;
+      width: 100%;
+      margin: 4px 0 8px;
+      padding: 6px 8px;
+      border: 1px solid #e2a336;
+      border-radius: 8px;
+      background: #fff2c2;
+      color: #713200;
+      font-size: 12px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .progress-deadline span {
+      font-weight: 700;
+    }
+
+    .progress-deadline strong {
+      color: #a23c00;
+      font-size: 12.5px;
+      white-space: normal;
+    }
+''',
+            html,
+        )
+
+    html = html.replace(
+        '${project.deadline ? `<span class="pill">Hoàn thành: ${project.deadline}</span>` : ""}',
+        '${project.deadline ? `<span class="pill deadline-pill">Dự kiến hoàn thành GPMB: ${project.deadline}</span>` : ""}',
+    )
+    html = html.replace(
+        '<div class="progress-row"><span class="progress-label">Tiến độ GPMB</span><strong>${percent}</strong>${areaRatio ? `<span class="area-ratio">Đã GPMB ${areaRatio}</span>` : ""}</div>\n            <div class="bar">',
+        '<div class="progress-row"><span class="progress-label">Tiến độ GPMB</span><strong>${percent}</strong>${areaRatio ? `<span class="area-ratio">Đã GPMB ${areaRatio}</span>` : ""}</div>\n            ${project.deadline ? `<div class="progress-deadline"><span>Dự kiến hoàn thành GPMB</span><strong>${project.deadline}</strong></div>` : ""}\n            <div class="bar">',
+    )
+
+    if "function compactDeadline" not in html:
+        html = insert_after_once(
+            r'    function clipLabel\(text, max = 34\) \{\n      return text\.length > max \? `\$\{text\.slice\(0, max - 3\)\}\.\.\.` : text;\n    \}\n',
+            '''
+
+    function compactDeadline(deadline) {
+      if (!deadline) return "";
+      const dates = deadline.match(/\\d{1,2}\\/\\d{1,2}(?:\\/\\d{4})?/g);
+      if (!dates) return deadline.replace(/^Trước\\s+/i, "").trim();
+      const unique = [...new Set(dates.map(date => date.replace(/\\/2026$/, "")))];
+      return unique.join("; ");
+    }
+''',
+            html,
+        )
+
+    progress_chart = '''    function drawProgressPercentChart() {
+      const svg = document.getElementById("progressPercentChart");
+      const mobile = isMobileChart();
+      const sorted = [...projects].sort((a, b) => {
+        const aKnown = Number.isFinite(a.progress);
+        const bKnown = Number.isFinite(b.progress);
+        if (aKnown && bKnown) return b.progress - a.progress || a.order - b.order;
+        if (aKnown) return -1;
+        if (bKnown) return 1;
+        return a.order - b.order;
+      });
+      if (mobile) {
+        svg.setAttribute("viewBox", "0 0 420 940");
+        const rows = sorted.map((project, i) => {
+          const y = 24 + i * 102;
+          const known = Number.isFinite(project.progress);
+          const barW = 384;
+          const w = known ? Math.max(4, project.progress / 100 * barW) : barW;
+          const fill = known ? colors.public : colors.unknown;
+          const ratio = compactAreaRatio(project);
+          const deadline = compactDeadline(project.deadline);
+          const percentText = known ? `${project.progress.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%` : "Chưa có %";
+          return `
+            <text x="18" y="${y}" font-size="12.8" fill="${colors.text}" font-weight="700">${escapeHtml(clipLabel(shortName(project.name), 52))}</text>
+            <rect x="18" y="${y + 12}" width="${barW}" height="20" rx="7" fill="#e7edf2"/>
+            <rect x="18" y="${y + 12}" width="${w}" height="20" rx="7" fill="${fill}"/>
+            <text x="18" y="${y + 54}" font-size="14" fill="${colors.text}" font-weight="800">${percentText}</text>
+            ${ratio ? `<text x="18" y="${y + 74}" font-size="12.8" fill="${colors.ratio}" font-weight="800">(${escapeHtml(ratio)})</text>` : ""}
+            ${deadline ? `<text x="18" y="${y + 94}" font-size="12.4" fill="#a23c00" font-weight="800">Mốc HT GPMB: ${escapeHtml(deadline)}</text>` : ""}
+          `;
+        }).join("");
+        svg.innerHTML = `<rect x="0" y="0" width="420" height="940" fill="transparent"/>${rows}`;
+        return;
+      }
+      svg.setAttribute("viewBox", "0 0 900 430");
+      const rows = sorted.map((project, i) => {
+        const y = 32 + i * 45;
+        const known = Number.isFinite(project.progress);
+        const barW = 300;
+        const w = known ? Math.max(4, project.progress / 100 * barW) : barW;
+        const fill = known ? colors.public : colors.unknown;
+        const ratio = compactAreaRatio(project);
+        const deadline = compactDeadline(project.deadline);
+        const percentText = known ? `${project.progress.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%` : "Chưa có %";
+        return `
+          <text x="22" y="${y}" font-size="11.5" fill="${colors.text}" font-weight="700">${escapeHtml(clipLabel(shortName(project.name), 60))}</text>
+          ${deadline ? `<text x="22" y="${y + 17}" font-size="11" fill="#a23c00" font-weight="800">Mốc HT GPMB: ${escapeHtml(deadline)}</text>` : ""}
+          <rect x="430" y="${y - 14}" width="${barW}" height="18" rx="7" fill="#e7edf2"/>
+          <rect x="430" y="${y - 14}" width="${w}" height="18" rx="7" fill="${fill}"/>
+          <text x="748" y="${y}" font-size="11.5" fill="${colors.text}" font-weight="800">${percentText}</text>
+          ${ratio ? `<text x="790" y="${y}" font-size="11.5" fill="${colors.ratio}" font-weight="800">(${escapeHtml(ratio)})</text>` : ""}
+        `;
+      }).join("");
+      svg.innerHTML = `<rect x="0" y="0" width="900" height="430" fill="transparent"/>${rows}`;
+    }'''
+    html = replace_once(r'    function drawProgressPercentChart\(\) \{[\s\S]*?\n    \}', progress_chart, html)
 
     chart_hint = (
         f'Các biểu đồ dùng dữ liệu từ file “PL Tien do (TB ket luan 326TB-UBND).xlsx” '
