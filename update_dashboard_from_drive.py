@@ -86,9 +86,10 @@ def extract_projects(html: str) -> list[dict]:
 
 def replace_projects(html: str, projects: list[dict], data_date: str) -> str:
     payload = json.dumps(projects, ensure_ascii=False, indent=6)
+    projects_block = "    const projects = " + "\n    ".join(payload.splitlines()) + ";\n\n    const dataUpdatedDate"
     html = re.sub(
         r"    const projects = \[[\s\S]*?\n\s*\];\n\n    const dataUpdatedDate",
-        "    const projects = " + "\n    ".join(payload.splitlines()) + ";\n\n    const dataUpdatedDate",
+        lambda _m: projects_block,
         html,
     )
     html = re.sub(r'const dataUpdatedDate = "[^"]+";', f'const dataUpdatedDate = "{data_date}";', html)
