@@ -57,9 +57,9 @@ def main() -> int:
             r'\n    \.pill\.private-fund \{[\s\S]*?\n    \}\n',
             '''
     .pill.deadline-pill {
-      border-color: #e3a12c;
-      background: #fff3cc;
-      color: #7a3300;
+      border-color: #5b8def;
+      background: #eef5ff;
+      color: #1d4ed8;
       font-weight: 800;
     }
 ''',
@@ -78,10 +78,10 @@ def main() -> int:
       width: 100%;
       margin: 4px 0 8px;
       padding: 6px 8px;
-      border: 1px solid #e2a336;
+      border: 1px solid #70a5ff;
       border-radius: 8px;
-      background: #fff2c2;
-      color: #713200;
+      background: #eef5ff;
+      color: #1d4ed8;
       font-size: 12px;
       line-height: 1.35;
       overflow-wrap: anywhere;
@@ -92,7 +92,7 @@ def main() -> int:
     }
 
     .progress-deadline strong {
-      color: #a23c00;
+      color: #1d4ed8;
       font-size: 12.5px;
       white-space: normal;
     }
@@ -100,13 +100,35 @@ def main() -> int:
             html,
         )
 
+    for old, new in {
+        "#e3a12c": "#5b8def",
+        "#fff3cc": "#eef5ff",
+        "#7a3300": "#1d4ed8",
+        "#e2a336": "#70a5ff",
+        "#fff2c2": "#eef5ff",
+        "#713200": "#1d4ed8",
+        "#a23c00": "#1d4ed8",
+        "Dự kiến hoàn thành GPMB": "Dự kiến hoàn thành",
+        "Mốc HT GPMB:": "- mốc HT:",
+        "Mốc HT:": "- mốc HT:",
+    }.items():
+        html = html.replace(old, new)
+
     html = html.replace(
         '${project.deadline ? `<span class="pill">Hoàn thành: ${project.deadline}</span>` : ""}',
+        '${project.deadline ? `<span class="pill deadline-pill">Dự kiến hoàn thành: ${project.deadline}</span>` : ""}',
+    )
+    html = html.replace(
         '${project.deadline ? `<span class="pill deadline-pill">Dự kiến hoàn thành GPMB: ${project.deadline}</span>` : ""}',
+        '${project.deadline ? `<span class="pill deadline-pill">Dự kiến hoàn thành: ${project.deadline}</span>` : ""}',
     )
     html = html.replace(
         '<div class="progress-row"><span class="progress-label">Tiến độ GPMB</span><strong>${percent}</strong>${areaRatio ? `<span class="area-ratio">Đã GPMB ${areaRatio}</span>` : ""}</div>\n            <div class="bar">',
+        '<div class="progress-row"><span class="progress-label">Tiến độ GPMB</span><strong>${percent}</strong>${areaRatio ? `<span class="area-ratio">Đã GPMB ${areaRatio}</span>` : ""}</div>\n            ${project.deadline ? `<div class="progress-deadline"><span>Dự kiến hoàn thành</span><strong>${project.deadline}</strong></div>` : ""}\n            <div class="bar">',
+    )
+    html = html.replace(
         '<div class="progress-row"><span class="progress-label">Tiến độ GPMB</span><strong>${percent}</strong>${areaRatio ? `<span class="area-ratio">Đã GPMB ${areaRatio}</span>` : ""}</div>\n            ${project.deadline ? `<div class="progress-deadline"><span>Dự kiến hoàn thành GPMB</span><strong>${project.deadline}</strong></div>` : ""}\n            <div class="bar">',
+        '<div class="progress-row"><span class="progress-label">Tiến độ GPMB</span><strong>${percent}</strong>${areaRatio ? `<span class="area-ratio">Đã GPMB ${areaRatio}</span>` : ""}</div>\n            ${project.deadline ? `<div class="progress-deadline"><span>Dự kiến hoàn thành</span><strong>${project.deadline}</strong></div>` : ""}\n            <div class="bar">',
     )
 
     if "function compactDeadline" not in html:
@@ -153,7 +175,7 @@ def main() -> int:
             <rect x="18" y="${y + 12}" width="${w}" height="20" rx="7" fill="${fill}"/>
             <text x="18" y="${y + 54}" font-size="14" fill="${colors.text}" font-weight="800">${percentText}</text>
             ${ratio ? `<text x="18" y="${y + 74}" font-size="12.8" fill="${colors.ratio}" font-weight="800">(${escapeHtml(ratio)})</text>` : ""}
-            ${deadline ? `<text x="18" y="${y + 94}" font-size="12.4" fill="#a23c00" font-weight="800">Mốc HT GPMB: ${escapeHtml(deadline)}</text>` : ""}
+            ${deadline ? `<text x="18" y="${y + 94}" font-size="12.4" fill="#1d4ed8" font-weight="800">- mốc HT: ${escapeHtml(deadline)}</text>` : ""}
           `;
         }).join("");
         svg.innerHTML = `<rect x="0" y="0" width="420" height="940" fill="transparent"/>${rows}`;
@@ -171,11 +193,11 @@ def main() -> int:
         const percentText = known ? `${project.progress.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%` : "Chưa có %";
         return `
           <text x="22" y="${y}" font-size="11.5" fill="${colors.text}" font-weight="700">${escapeHtml(clipLabel(shortName(project.name), 60))}</text>
-          ${deadline ? `<text x="22" y="${y + 17}" font-size="11" fill="#a23c00" font-weight="800">Mốc HT GPMB: ${escapeHtml(deadline)}</text>` : ""}
           <rect x="430" y="${y - 14}" width="${barW}" height="18" rx="7" fill="#e7edf2"/>
           <rect x="430" y="${y - 14}" width="${w}" height="18" rx="7" fill="${fill}"/>
           <text x="748" y="${y}" font-size="11.5" fill="${colors.text}" font-weight="800">${percentText}</text>
           ${ratio ? `<text x="790" y="${y}" font-size="11.5" fill="${colors.ratio}" font-weight="800">(${escapeHtml(ratio)})</text>` : ""}
+          ${deadline ? `<text x="748" y="${y + 17}" font-size="11" fill="#1d4ed8" font-weight="800">- mốc HT: ${escapeHtml(deadline)}</text>` : ""}
         `;
       }).join("");
       svg.innerHTML = `<rect x="0" y="0" width="900" height="430" fill="transparent"/>${rows}`;
