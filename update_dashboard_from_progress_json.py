@@ -120,11 +120,11 @@ def main() -> int:
     )
     html = html.replace(
         "    .chart.progress-percent-chart {\n      height: 340px;\n    }",
-        "    .chart.progress-percent-chart {\n      height: 560px;\n    }",
+        "    .chart.progress-percent-chart {\n      height: 430px;\n    }",
     )
     html = html.replace(
-        "    .chart.progress-percent-chart {\n      height: 430px;\n    }",
         "    .chart.progress-percent-chart {\n      height: 560px;\n    }",
+        "    .chart.progress-percent-chart {\n      height: 430px;\n    }",
     )
 
     html = html.replace(
@@ -188,7 +188,7 @@ def main() -> int:
       if (!deadline) return "";
       const summaries = {
         1: "15/8(HT);25/7(TĐC);30/7(PA);10/8(BV);5/8(GP)",
-        3: "20/8(HT)",
+        3: "20/8",
         4: "30/7(PA);15/8(HT)",
         5: "30/7(PA);15/8(HT)",
         6: "21/8(95%)"
@@ -197,7 +197,7 @@ def main() -> int:
       const normalized = deadline.replace(/\\/2026/g, "");
       return normalized.includes(";")
         ? normalized.split(";").map(item => `${item.trim()}(HT)`).join(";")
-        : `${normalized}(HT)`;
+        : normalized;
     }
 ''',
             html,
@@ -247,7 +247,7 @@ def main() -> int:
       if (!deadline) return "";
       const summaries = {
         1: "15/8(HT);25/7(TĐC);30/7(PA);10/8(BV);5/8(GP)",
-        3: "20/8(HT)",
+        3: "20/8",
         4: "30/7(PA);15/8(HT)",
         5: "30/7(PA);15/8(HT)",
         6: "21/8(95%)"
@@ -256,7 +256,7 @@ def main() -> int:
       const normalized = deadline.replace(/\\/2026/g, "");
       return normalized.includes(";")
         ? normalized.split(";").map(item => `${item.trim()}(HT)`).join(";")
-        : `${normalized}(HT)`;
+        : normalized;
     }
 ''',
             html,
@@ -305,35 +305,28 @@ def main() -> int:
         svg.innerHTML = `<rect x="0" y="0" width="420" height="${height}" fill="transparent"/>${rows}`;
         return;
       }
-      let cursor = 24;
-      const rows = sorted.map(project => {
-        const nameLines = wrapSvgText(chartProjectName(project.name), 92);
-        const y = cursor;
-        const barY = y + nameLines.length * 15 + 9;
-        const metricY = barY + 32;
+      svg.setAttribute("viewBox", "0 0 900 430");
+      const rows = sorted.map((project, i) => {
+        const y = 32 + i * 45;
         const known = Number.isFinite(project.progress);
-        const barW = 640;
+        const barW = 250;
         const w = known ? Math.max(4, project.progress / 100 * barW) : barW;
         const fill = known ? colors.public : colors.unknown;
         const ratio = compactAreaRatio(project);
         const deadline = chartDeadline(project);
         const percentText = known ? `${project.progress.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%` : "Chưa có %";
-        const title = nameLines.map((line, index) => `<tspan x="22" dy="${index ? 15 : 0}">${escapeHtml(line)}</tspan>`).join("");
-        cursor = metricY + 24;
         return `
-          <text x="22" y="${y}" font-size="11.5" fill="${colors.text}" font-weight="700">${title}</text>
-          <rect x="22" y="${barY}" width="${barW}" height="18" rx="7" fill="#e7edf2"/>
-          <rect x="22" y="${barY}" width="${w}" height="18" rx="7" fill="${fill}"/>
-          <text x="22" y="${metricY}" font-size="11.2" font-weight="800">
+          <text x="22" y="${y}" font-size="11.2" fill="${colors.text}" font-weight="700">${escapeHtml(clipLabel(chartProjectName(project.name), 58))}</text>
+          <rect x="382" y="${y - 14}" width="${barW}" height="18" rx="7" fill="#e7edf2"/>
+          <rect x="382" y="${y - 14}" width="${w}" height="18" rx="7" fill="${fill}"/>
+          <text x="650" y="${y}" font-size="9.3" font-weight="800">
             <tspan fill="${colors.text}">${percentText}</tspan>
             ${ratio ? `<tspan dx="4" fill="${colors.ratio}">(${escapeHtml(ratio)})</tspan>` : ""}
             ${deadline ? `<tspan dx="5" fill="#1d4ed8">- mốc HT: ${escapeHtml(deadline)}</tspan>` : ""}
           </text>
         `;
       }).join("");
-      const height = Math.max(430, cursor + 8);
-      svg.setAttribute("viewBox", `0 0 900 ${height}`);
-      svg.innerHTML = `<rect x="0" y="0" width="900" height="${height}" fill="transparent"/>${rows}`;
+      svg.innerHTML = `<rect x="0" y="0" width="900" height="430" fill="transparent"/>${rows}`;
     }'''
     html = replace_once(r'    function drawProgressPercentChart\(\) \{[\s\S]*?\n    \}', progress_chart, html)
 
