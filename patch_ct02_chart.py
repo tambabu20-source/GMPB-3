@@ -42,8 +42,11 @@ def patch_html(html: str) -> str:
   const y = 32 + i * rowHeight;
   const isWatchOut = project.order === 9;
   if (isWatchOut) {
+    const ct02Lines = wrapSvgText(chartProjectName(project.name), 58);
+    const ct02Title = ct02Lines.map((line, index) => `<tspan x="22" dy="${index ? 14 : 0}">${escapeHtml(line)}</tspan>`).join("");
+    const ct02TitleY = y - (ct02Lines.length > 1 ? 8 : 0);
     return `
-      <text x="22" y="${y}" font-size="10.8" fill="${colors.text}" font-weight="700">${escapeHtml(chartProjectName(project.name))}</text>
+      <text x="22" y="${ct02TitleY}" font-size="10.8" fill="${colors.text}" font-weight="700">${ct02Title}</text>
       <rect x="500" y="${y - 16}" width="180" height="22" rx="8" fill="#fff7ed" stroke="#fdba74"/>
       <text x="512" y="${y - 1}" font-size="9.8" fill="${colors.watchOut}" font-weight="800">Đề xuất bỏ ra Danh mục theo dõi</text>
     `;
@@ -56,8 +59,11 @@ def patch_html(html: str) -> str:
         const y = 32 + i * rowHeight;
         const isWatchOut = project.order === 9;
         if (isWatchOut) {
+          const ct02Lines = wrapSvgText(chartProjectName(project.name), 58);
+          const ct02Title = ct02Lines.map((line, index) => `<tspan x="22" dy="${index ? 14 : 0}">${escapeHtml(line)}</tspan>`).join("");
+          const ct02TitleY = y - (ct02Lines.length > 1 ? 8 : 0);
           return `
-            <text x="22" y="${y}" font-size="10.8" fill="${colors.text}" font-weight="700">${escapeHtml(chartProjectName(project.name))}</text>
+            <text x="22" y="${ct02TitleY}" font-size="10.8" fill="${colors.text}" font-weight="700">${ct02Title}</text>
             <rect x="500" y="${y - 16}" width="180" height="22" rx="8" fill="#fff7ed" stroke="#fdba74"/>
             <text x="512" y="${y - 1}" font-size="9.8" fill="${colors.watchOut}" font-weight="800">Đề xuất bỏ ra Danh mục theo dõi</text>
           `;
@@ -66,6 +72,43 @@ def patch_html(html: str) -> str:
     if desktop_new_a not in html and desktop_new_b not in html:
         html = html.replace(desktop_old_a, desktop_new_a)
         html = html.replace(desktop_old_b, desktop_new_b)
+
+    desktop_existing_a = '''  if (isWatchOut) {
+    return `
+      <text x="22" y="${y}" font-size="10.8" fill="${colors.text}" font-weight="700">${escapeHtml(chartProjectName(project.name))}</text>
+      <rect x="500" y="${y - 16}" width="180" height="22" rx="8" fill="#fff7ed" stroke="#fdba74"/>
+      <text x="512" y="${y - 1}" font-size="9.8" fill="${colors.watchOut}" font-weight="800">Đề xuất bỏ ra Danh mục theo dõi</text>
+    `;
+  }'''
+    desktop_existing_b = '''        if (isWatchOut) {
+          return `
+            <text x="22" y="${y}" font-size="10.8" fill="${colors.text}" font-weight="700">${escapeHtml(chartProjectName(project.name))}</text>
+            <rect x="500" y="${y - 16}" width="180" height="22" rx="8" fill="#fff7ed" stroke="#fdba74"/>
+            <text x="512" y="${y - 1}" font-size="9.8" fill="${colors.watchOut}" font-weight="800">Đề xuất bỏ ra Danh mục theo dõi</text>
+          `;
+        }'''
+    desktop_fixed_a = '''  if (isWatchOut) {
+    const ct02Lines = wrapSvgText(chartProjectName(project.name), 58);
+    const ct02Title = ct02Lines.map((line, index) => `<tspan x="22" dy="${index ? 14 : 0}">${escapeHtml(line)}</tspan>`).join("");
+    const ct02TitleY = y - (ct02Lines.length > 1 ? 8 : 0);
+    return `
+      <text x="22" y="${ct02TitleY}" font-size="10.8" fill="${colors.text}" font-weight="700">${ct02Title}</text>
+      <rect x="500" y="${y - 16}" width="180" height="22" rx="8" fill="#fff7ed" stroke="#fdba74"/>
+      <text x="512" y="${y - 1}" font-size="9.8" fill="${colors.watchOut}" font-weight="800">Đề xuất bỏ ra Danh mục theo dõi</text>
+    `;
+  }'''
+    desktop_fixed_b = '''        if (isWatchOut) {
+          const ct02Lines = wrapSvgText(chartProjectName(project.name), 58);
+          const ct02Title = ct02Lines.map((line, index) => `<tspan x="22" dy="${index ? 14 : 0}">${escapeHtml(line)}</tspan>`).join("");
+          const ct02TitleY = y - (ct02Lines.length > 1 ? 8 : 0);
+          return `
+            <text x="22" y="${ct02TitleY}" font-size="10.8" fill="${colors.text}" font-weight="700">${ct02Title}</text>
+            <rect x="500" y="${y - 16}" width="180" height="22" rx="8" fill="#fff7ed" stroke="#fdba74"/>
+            <text x="512" y="${y - 1}" font-size="9.8" fill="${colors.watchOut}" font-weight="800">Đề xuất bỏ ra Danh mục theo dõi</text>
+          `;
+        }'''
+    html = html.replace(desktop_existing_a, desktop_fixed_a)
+    html = html.replace(desktop_existing_b, desktop_fixed_b)
 
     return html
 
@@ -79,7 +122,7 @@ def main() -> int:
     new_html = patch_html(html)
     if new_html != html:
         path.write_text(new_html, encoding="utf-8")
-        print("Đã thêm nhãn CT.02 và bỏ thanh ngang trong biểu đồ tỷ lệ GPMB.")
+        print("Đã thêm nhãn CT.02 và chống đè chữ trong biểu đồ tỷ lệ GPMB.")
     else:
         print("Biểu đồ CT.02 đã đúng.")
     return 0
