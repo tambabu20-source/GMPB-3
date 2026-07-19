@@ -41,11 +41,66 @@ jobs:
 
           path = Path("index.html")
           html = path.read_text(encoding="utf-8")
-          new = '''      const rowHeight = 48;
+          original = html
+
+          html = html.replace(
+              '      muted: "#5c697a"\n    };',
+              '      muted: "#5c697a",\n      watchOut: "#c2410c"\n    };',
+          )
+
+          mobile_old = '''        const rows = sorted.map(project => {
+          const nameLines = wrapSvgText(chartProjectName(project.name), 52);
+          const y = cursor;
+          const barY = y + nameLines.length * 16 + 10;'''
+          mobile_new = '''        const rows = sorted.map(project => {
+          const isWatchOut = project.order === 9;
+          const nameLines = wrapSvgText(chartProjectName(project.name), 52);
+          const y = cursor;
+          if (isWatchOut) {
+            const statusY = y + nameLines.length * 16 + 14;
+            const title = nameLines.map((line, index) => `<tspan x="18" dy="${index ? 16 : 0}">${escapeHtml(line)}</tspan>`).join("");
+            cursor = statusY + 34;
+            return `
+              <text x="18" y="${y}" font-size="12.3" fill="${colors.text}" font-weight="700">${title}</text>
+              <rect x="18" y="${statusY - 15}" width="276" height="24" rx="8" fill="#fff7ed" stroke="#fdba74"/>
+              <text x="30" y="${statusY + 1}" font-size="11.3" fill="${colors.watchOut}" font-weight="800">Đề xuất bỏ ra Danh mục theo dõi</text>
+            `;
+          }
+          const barY = y + nameLines.length * 16 + 10;'''
+          if 'const isWatchOut = project.order === 9;' not in html:
+              html = html.replace(mobile_old, mobile_new)
+
+          desktop_old = '''  const y = 32 + i * rowHeight;
+  const known = Number.isFinite(project.progress);'''
+          desktop_new = '''  const y = 32 + i * rowHeight;
+  const isWatchOut = project.order === 9;
+  if (isWatchOut) {
+    return `
+      <text x="22" y="${y}" font-size="10.8" fill="${colors.text}" font-weight="700">${escapeHtml(chartProjectName(project.name))}</text>
+      <rect x="500" y="${y - 16}" width="180" height="22" rx="8" fill="#fff7ed" stroke="#fdba74"/>
+      <text x="512" y="${y - 1}" font-size="9.8" fill="${colors.watchOut}" font-weight="800">Đề xuất bỏ ra Danh mục theo dõi</text>
+    `;
+  }
+  const known = Number.isFinite(project.progress);'''
+          if 'Đề xuất bỏ ra Danh mục theo dõi' not in html:
+              html = html.replace(desktop_old, desktop_new)
+          elif 'const isWatchOut = project.order === 9;' in html and desktop_new not in html:
+              html = html.replace(desktop_old, desktop_new)
+
+          old_fixed_chart = r'      svg\.setAttribute\("viewBox", "0 0 900 430"\);\n[\s\S]*?      svg\.innerHTML = `<rect x="0" y="0" width="900" height="430" fill="transparent"/>\$\{rows\}`;'
+          responsive_chart = '''      const rowHeight = 48;
           const chartHeight = 38 + sorted.length * rowHeight;
           svg.setAttribute("viewBox", `0 0 900 ${chartHeight}`);
           const rows = sorted.map((project, i) => {
             const y = 32 + i * rowHeight;
+            const isWatchOut = project.order === 9;
+            if (isWatchOut) {
+              return `
+                <text x="22" y="${y}" font-size="10.8" fill="${colors.text}" font-weight="700">${escapeHtml(chartProjectName(project.name))}</text>
+                <rect x="500" y="${y - 16}" width="180" height="22" rx="8" fill="#fff7ed" stroke="#fdba74"/>
+                <text x="512" y="${y - 1}" font-size="9.8" fill="${colors.watchOut}" font-weight="800">Đề xuất bỏ ra Danh mục theo dõi</text>
+              `;
+            }
             const known = Number.isFinite(project.progress);
             const barX = 500;
             const barW = 190;
@@ -66,15 +121,13 @@ jobs:
             `;
           }).join("");
           svg.innerHTML = `<rect x="0" y="0" width="900" height="${chartHeight}" fill="transparent"/>${rows}`;'''
-          pattern = r'      svg\.setAttribute\("viewBox", "0 0 900 430"\);\n[\s\S]*?      svg\.innerHTML = `<rect x="0" y="0" width="900" height="430" fill="transparent"/>\$\{rows\}`;'
-          html, count = re.subn(pattern, new, html, count=1)
-          if count == 1:
+          html, _ = re.subn(old_fixed_chart, responsive_chart, html, count=1)
+
+          if html != original:
               path.write_text(html, encoding="utf-8")
-              print("Đã nới cột tên dự án trong biểu đồ tỷ lệ GPMB.")
-          elif new in html:
-              print("Biểu đồ tỷ lệ GPMB đã đúng layout mới.")
+              print("Đã chuẩn hóa biểu đồ và thêm nhãn CT.02.")
           else:
-              raise SystemExit("Không tìm thấy đoạn biểu đồ cần chỉnh trong index.html")
+              print("Biểu đồ tỷ lệ GPMB đã đúng layout và nhãn CT.02.")
           PY
 
       - name: Commit nếu có số liệu mới
