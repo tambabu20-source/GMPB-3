@@ -2,14 +2,69 @@
 from __future__ import annotations
 
 import argparse
+import re
 from pathlib import Path
 
 MARKER = "Đề xuất bỏ ra Danh mục theo dõi"
 PROGRESS_LEGEND = '            <div class="legend"><span><i class="dot" style="background:#0b6b72"></i> Có tỷ lệ %</span><span><i class="dot" style="background:#7b8794"></i> Chưa có tỷ lệ %</span></div>\n'
+SUMMARY_DONUT_FUNCTION = '''    function drawProgressDataChart() {
+      const svg = document.getElementById("progressDataChart");
+      const known = projects.filter(p => Number.isFinite(p.progress));
+      const segments = [
+        { label: "Từ 90% trở lên", count: known.filter(p => p.progress >= 90).length, color: colors.public },
+        { label: "Từ 70% đến dưới 90%", count: known.filter(p => p.progress >= 70 && p.progress < 90).length, color: "#2f855a" },
+        { label: "Dưới 70%", count: known.filter(p => p.progress > 0 && p.progress < 70).length, color: "#d97706" },
+        { label: "0%", count: known.filter(p => p.progress === 0).length, color: colors.unknown }
+      ];
+      const total = known.length || 1;
+      const cx = 118;
+      const cy = 92;
+      const r = 56;
+      const width = 22;
+      const circumference = 2 * Math.PI * r;
+      let offset = 0;
+      const arcs = segments.map(segment => {
+        const length = segment.count / total * circumference;
+        const dash = `${Math.max(0, length - 2)} ${circumference}`;
+        const arc = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${segment.color}" stroke-width="${width}" stroke-dasharray="${dash}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})" stroke-linecap="round"/>`;
+        offset += length;
+        return arc;
+      }).join("");
+      const legend = segments.map((segment, index) => {
+        const y = 44 + index * 32;
+        return `
+          <rect x="235" y="${y - 13}" width="14" height="14" rx="4" fill="${segment.color}"/>
+          <text x="260" y="${y - 2}" font-size="12.2" fill="${colors.text}" font-weight="700">${segment.label}</text>
+          <text x="460" y="${y - 2}" font-size="12.2" fill="${colors.text}" font-weight="800" text-anchor="end">${segment.count} dự án</text>
+        `;
+      }).join("");
+      svg.innerHTML = `
+        <rect x="0" y="0" width="520" height="180" fill="transparent"/>
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#e7edf2" stroke-width="${width}"/>
+        ${arcs}
+        <text x="${cx}" y="${cy - 4}" font-size="25" fill="${colors.text}" font-weight="800" text-anchor="middle">${known.length}</text>
+        <text x="${cx}" y="${cy + 17}" font-size="11.5" fill="${colors.muted}" font-weight="700" text-anchor="middle">dự án có %</text>
+        ${legend}
+      `;
+    }'''
 
 
 def patch_html(html: str) -> str:
     html = html.replace(PROGRESS_LEGEND, "")
+    html = html.replace(
+        '            <h3>Trạng thái dữ liệu tiến độ GPMB</h3>\n            <div class="legend"><span><i class="dot" style="background:#7b8794"></i> Chưa có tỷ lệ %</span></div>\n',
+        '            <h3>Cơ cấu tiến độ 8 dự án có tỷ lệ GPMB</h3>\n',
+    )
+    html = html.replace(
+        'aria-label="Biểu đồ trạng thái dữ liệu tiến độ GPMB"',
+        'aria-label="Biểu đồ cơ cấu tiến độ 8 dự án có tỷ lệ GPMB"',
+    )
+    html = re.sub(
+        r'    function drawProgressDataChart\(\) \{[\s\S]*?\n    \}\n\n    function drawProgressPercentChart',
+        SUMMARY_DONUT_FUNCTION + '\n\n    function drawProgressPercentChart',
+        html,
+        count=1,
+    )
     html = html.replace(
         '      muted: "#5c697a"\n    };',
         '      muted: "#5c697a",\n      watchOut: "#c2410c"\n    };',
@@ -124,7 +179,7 @@ def main() -> int:
     new_html = patch_html(html)
     if new_html != html:
         path.write_text(new_html, encoding="utf-8")
-        print("Đã bỏ chú giải, thêm nhãn CT.02 và chống đè chữ trong biểu đồ tỷ lệ GPMB.")
+        print("Đã thay biểu đồ trạng thái bằng biểu đồ cơ cấu tiến độ, bỏ chú giải và chống đè chữ CT.02.")
     else:
         print("Biểu đồ CT.02 đã đúng.")
     return 0
