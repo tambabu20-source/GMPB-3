@@ -218,6 +218,7 @@ def update_summary_and_source(html: str, projects: list[dict], data_date: str) -
     known = [p for p in projects if isinstance(p.get("progress"), (int, float))]
     avg = sum(float(p["progress"]) for p in known) / len(known) if known else 0
     html = re.sub(r"Cập nhật ngày \d{1,2}/\d{1,2}/\d{4}", f"Cập nhật ngày {data_date}", html)
+    html = re.sub(r"Cập nhật số liệu: \d{1,2}/\d{1,2}/\d{4}", f"Cập nhật số liệu: {data_date}", html)
     html = re.sub(r"Bình quân 8 dự án có %</span><b>[^<]+</b>", f"Bình quân 8 dự án có %</span><b>{fmt(avg, 2)}%</b>", html)
     chart_hint = f'Các biểu đồ dùng dữ liệu từ file “{SOURCE_FILE_NAME}” và phụ lục tiến độ kèm Thông báo kết luận số 326/TB-UBND ngày {data_date}.'
     html = re.sub(r"Các biểu đồ dùng dữ liệu từ .*?</p>", chart_hint + "</p>", html, flags=re.S)
