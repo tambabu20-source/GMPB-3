@@ -5,9 +5,11 @@ import argparse
 from pathlib import Path
 
 MARKER = "Đề xuất bỏ ra Danh mục theo dõi"
+PROGRESS_LEGEND = '            <div class="legend"><span><i class="dot" style="background:#0b6b72"></i> Có tỷ lệ %</span><span><i class="dot" style="background:#7b8794"></i> Chưa có tỷ lệ %</span></div>\n'
 
 
 def patch_html(html: str) -> str:
+    html = html.replace(PROGRESS_LEGEND, "")
     html = html.replace(
         '      muted: "#5c697a"\n    };',
         '      muted: "#5c697a",\n      watchOut: "#c2410c"\n    };',
@@ -122,7 +124,7 @@ def main() -> int:
     new_html = patch_html(html)
     if new_html != html:
         path.write_text(new_html, encoding="utf-8")
-        print("Đã thêm nhãn CT.02 và chống đè chữ trong biểu đồ tỷ lệ GPMB.")
+        print("Đã bỏ chú giải, thêm nhãn CT.02 và chống đè chữ trong biểu đồ tỷ lệ GPMB.")
     else:
         print("Biểu đồ CT.02 đã đúng.")
     return 0
