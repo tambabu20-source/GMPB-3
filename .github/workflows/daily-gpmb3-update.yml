@@ -7,6 +7,7 @@ on:
   workflow_dispatch:
   push:
     paths:
+      - ".github/workflows/daily-gpmb3-update.yml"
       - "work/latest_progress_data.json"
       - "update_dashboard_from_progress_json.py"
       - "update_dashboard_from_drive.py"
@@ -33,6 +34,69 @@ jobs:
           else
             python update_dashboard_from_drive.py --index index.html
           fi
+
+      - name: Chuẩn hóa biểu đồ tỷ lệ GPMB bản web
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path("index.html")
+          html = path.read_text(encoding="utf-8")
+          old = '''      svg.setAttribute("viewBox", "0 0 900 430");
+          const rows = sorted.map((project, i) => {
+            const y = 32 + i * 45;
+            const known = Number.isFinite(project.progress);
+            const barW = 250;
+            const w = known ? Math.max(4, project.progress / 100 * barW) : barW;
+            const fill = known ? colors.public : colors.unknown;
+            const ratio = compactAreaRatio(project);
+            const deadline = chartDeadline(project);
+            const percentText = known ? `${project.progress.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%` : "Chưa có %";
+            return `
+              <text x="22" y="${y}" font-size="11.2" fill="${colors.text}" font-weight="700">${escapeHtml(clipLabel(chartProjectName(project.name), 58))}</text>
+              <rect x="382" y="${y - 14}" width="${barW}" height="18" rx="7" fill="#e7edf2"/>
+              <rect x="382" y="${y - 14}" width="${w}" height="18" rx="7" fill="${fill}"/>
+              <text x="650" y="${y}" font-size="9.3" font-weight="800">
+                <tspan fill="${colors.text}">${percentText}</tspan>
+                ${ratio ? `<tspan dx="4" fill="${colors.ratio}">(${escapeHtml(ratio)})</tspan>` : ""}
+                ${deadline ? `<tspan dx="5" fill="#1d4ed8">- mốc HT: ${escapeHtml(deadline)}</tspan>` : ""}
+              </text>
+            `;
+          }).join("");
+          svg.innerHTML = `<rect x="0" y="0" width="900" height="430" fill="transparent"/>${rows}`;'''
+          new = '''      const rowHeight = 48;
+          const chartHeight = 38 + sorted.length * rowHeight;
+          svg.setAttribute("viewBox", `0 0 900 ${chartHeight}`);
+          const rows = sorted.map((project, i) => {
+            const y = 32 + i * rowHeight;
+            const known = Number.isFinite(project.progress);
+            const barX = 500;
+            const barW = 190;
+            const w = known ? Math.max(4, project.progress / 100 * barW) : barW;
+            const fill = known ? colors.public : colors.unknown;
+            const ratio = compactAreaRatio(project);
+            const deadline = chartDeadline(project);
+            const percentText = known ? `${project.progress.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%` : "Chưa có %";
+            return `
+              <text x="22" y="${y}" font-size="10.8" fill="${colors.text}" font-weight="700">${escapeHtml(chartProjectName(project.name))}</text>
+              <rect x="${barX}" y="${y - 14}" width="${barW}" height="18" rx="7" fill="#e7edf2"/>
+              <rect x="${barX}" y="${y - 14}" width="${w}" height="18" rx="7" fill="${fill}"/>
+              <text x="706" y="${y}" font-size="9.2" font-weight="800">
+                <tspan fill="${colors.text}">${percentText}</tspan>
+                ${ratio ? `<tspan dx="4" fill="${colors.ratio}">(${escapeHtml(ratio)})</tspan>` : ""}
+                ${deadline ? `<tspan dx="5" fill="#1d4ed8">- mốc HT: ${escapeHtml(deadline)}</tspan>` : ""}
+              </text>
+            `;
+          }).join("");
+          svg.innerHTML = `<rect x="0" y="0" width="900" height="${chartHeight}" fill="transparent"/>${rows}`;'''
+          if old in html:
+              html = html.replace(old, new)
+              path.write_text(html, encoding="utf-8")
+              print("Đã nới cột tên dự án trong biểu đồ tỷ lệ GPMB.")
+          elif new in html:
+              print("Biểu đồ tỷ lệ GPMB đã đúng layout mới.")
+          else:
+              raise SystemExit("Không tìm thấy đoạn biểu đồ cần chỉnh trong index.html")
+          PY
 
       - name: Commit nếu có số liệu mới
         run: |
