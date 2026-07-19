@@ -1076,10 +1076,9 @@
             <div class="mini-metric"><span>Chưa có tỷ lệ %</span><b>1</b></div>
           </div>
           <div class="chart-title summary-chart-title">
-            <h3>Trạng thái dữ liệu tiến độ GPMB</h3>
-            <div class="legend"><span><i class="dot" style="background:#7b8794"></i> Chưa có tỷ lệ %</span></div>
+            <h3>Cơ cấu tiến độ 8 dự án có tỷ lệ GPMB</h3>
           </div>
-          <svg id="progressDataChart" class="chart summary-status-chart" viewBox="0 0 520 180" role="img" aria-label="Biểu đồ trạng thái dữ liệu tiến độ GPMB"></svg>
+          <svg id="progressDataChart" class="chart summary-status-chart" viewBox="0 0 520 180" role="img" aria-label="Biểu đồ cơ cấu tiến độ 8 dự án có tỷ lệ GPMB"></svg>
         </article>
       </div>
 
@@ -1627,20 +1626,42 @@
 
     function drawProgressDataChart() {
       const svg = document.getElementById("progressDataChart");
-      const known = projects.filter(p => Number.isFinite(p.progress)).length;
-      const unknown = projects.length - known;
-      const max = projects.length;
-      const knownW = Math.max(0, known / max * 340);
+      const known = projects.filter(p => Number.isFinite(p.progress));
+      const segments = [
+        { label: "Từ 90% trở lên", count: known.filter(p => p.progress >= 90).length, color: colors.public },
+        { label: "Từ 70% đến dưới 90%", count: known.filter(p => p.progress >= 70 && p.progress < 90).length, color: "#2f855a" },
+        { label: "Dưới 70%", count: known.filter(p => p.progress > 0 && p.progress < 70).length, color: "#d97706" },
+        { label: "0%", count: known.filter(p => p.progress === 0).length, color: colors.unknown }
+      ];
+      const total = known.length || 1;
+      const cx = 118;
+      const cy = 92;
+      const r = 56;
+      const width = 22;
+      const circumference = 2 * Math.PI * r;
+      let offset = 0;
+      const arcs = segments.map(segment => {
+        const length = segment.count / total * circumference;
+        const dash = `${Math.max(0, length - 2)} ${circumference}`;
+        const arc = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${segment.color}" stroke-width="${width}" stroke-dasharray="${dash}" stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})" stroke-linecap="round"/>`;
+        offset += length;
+        return arc;
+      }).join("");
+      const legend = segments.map((segment, index) => {
+        const y = 44 + index * 32;
+        return `
+          <rect x="235" y="${y - 13}" width="14" height="14" rx="4" fill="${segment.color}"/>
+          <text x="260" y="${y - 2}" font-size="12.2" fill="${colors.text}" font-weight="700">${segment.label}</text>
+          <text x="460" y="${y - 2}" font-size="12.2" fill="${colors.text}" font-weight="800" text-anchor="end">${segment.count} dự án</text>
+        `;
+      }).join("");
       svg.innerHTML = `
         <rect x="0" y="0" width="520" height="180" fill="transparent"/>
-        <text x="70" y="44" font-size="13" fill="${colors.text}" font-weight="700">Có tỷ lệ % GPMB</text>
-        <rect x="70" y="60" width="340" height="28" rx="8" fill="#e7edf2"/>
-        <rect x="70" y="60" width="${knownW}" height="28" rx="8" fill="${colors.public}"/>
-        <text x="432" y="79" font-size="13" fill="${colors.text}" font-weight="700">${known}/${max}</text>
-        <text x="70" y="126" font-size="13" fill="${colors.text}" font-weight="700">Chưa có tỷ lệ %</text>
-        <rect x="70" y="142" width="340" height="28" rx="8" fill="#e7edf2"/>
-        <rect x="70" y="142" width="${unknown / max * 340}" height="28" rx="8" fill="${colors.unknown}"/>
-        <text x="432" y="161" font-size="13" fill="${colors.text}" font-weight="700">${unknown}/${max}</text>
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#e7edf2" stroke-width="${width}"/>
+        ${arcs}
+        <text x="${cx}" y="${cy - 4}" font-size="25" fill="${colors.text}" font-weight="800" text-anchor="middle">${known.length}</text>
+        <text x="${cx}" y="${cy + 17}" font-size="11.5" fill="${colors.muted}" font-weight="700" text-anchor="middle">dự án có %</text>
+        ${legend}
       `;
     }
 
