@@ -11,6 +11,10 @@ on:
       - "workflow-trigger.txt"
       - "update_dashboard_from_drive.py"
 
+concurrency:
+  group: gpmb3-dashboard-update
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
