@@ -10,6 +10,7 @@ on:
       - ".github/workflows/daily-gpmb3-update.yml"
       - "workflow-trigger.txt"
       - "update_dashboard_from_drive.py"
+      - "patch_ct02_chart.py"
 
 concurrency:
   group: gpmb3-dashboard-update
@@ -33,102 +34,8 @@ jobs:
       - name: Cập nhật dashboard từ Google Drive
         run: python update_dashboard_from_drive.py --index index.html
 
-      - name: Chuẩn hóa biểu đồ tỷ lệ GPMB bản web
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import re
-
-          path = Path("index.html")
-          html = path.read_text(encoding="utf-8")
-          original = html
-
-          html = html.replace(
-              '      muted: "#5c697a"\n    };',
-              '      muted: "#5c697a",\n      watchOut: "#c2410c"\n    };',
-          )
-
-          mobile_old = '''        const rows = sorted.map(project => {
-          const nameLines = wrapSvgText(chartProjectName(project.name), 52);
-          const y = cursor;
-          const barY = y + nameLines.length * 16 + 10;'''
-          mobile_new = '''        const rows = sorted.map(project => {
-          const isWatchOut = project.order === 9;
-          const nameLines = wrapSvgText(chartProjectName(project.name), 52);
-          const y = cursor;
-          if (isWatchOut) {
-            const statusY = y + nameLines.length * 16 + 14;
-            const title = nameLines.map((line, index) => `<tspan x="18" dy="${index ? 16 : 0}">${escapeHtml(line)}</tspan>`).join("");
-            cursor = statusY + 34;
-            return `
-              <text x="18" y="${y}" font-size="12.3" fill="${colors.text}" font-weight="700">${title}</text>
-              <rect x="18" y="${statusY - 15}" width="276" height="24" rx="8" fill="#fff7ed" stroke="#fdba74"/>
-              <text x="30" y="${statusY + 1}" font-size="11.3" fill="${colors.watchOut}" font-weight="800">Đề xuất bỏ ra Danh mục theo dõi</text>
-            `;
-          }
-          const barY = y + nameLines.length * 16 + 10;'''
-          if 'const isWatchOut = project.order === 9;' not in html:
-              html = html.replace(mobile_old, mobile_new)
-
-          desktop_old = '''  const y = 32 + i * rowHeight;
-  const known = Number.isFinite(project.progress);'''
-          desktop_new = '''  const y = 32 + i * rowHeight;
-  const isWatchOut = project.order === 9;
-  if (isWatchOut) {
-    return `
-      <text x="22" y="${y}" font-size="10.8" fill="${colors.text}" font-weight="700">${escapeHtml(chartProjectName(project.name))}</text>
-      <rect x="500" y="${y - 16}" width="180" height="22" rx="8" fill="#fff7ed" stroke="#fdba74"/>
-      <text x="512" y="${y - 1}" font-size="9.8" fill="${colors.watchOut}" font-weight="800">Đề xuất bỏ ra Danh mục theo dõi</text>
-    `;
-  }
-  const known = Number.isFinite(project.progress);'''
-          if 'Đề xuất bỏ ra Danh mục theo dõi' not in html:
-              html = html.replace(desktop_old, desktop_new)
-          elif 'const isWatchOut = project.order === 9;' in html and desktop_new not in html:
-              html = html.replace(desktop_old, desktop_new)
-
-          old_fixed_chart = r'      svg\.setAttribute\("viewBox", "0 0 900 430"\);\n[\s\S]*?      svg\.innerHTML = `<rect x="0" y="0" width="900" height="430" fill="transparent"/>\$\{rows\}`;'
-          responsive_chart = '''      const rowHeight = 48;
-          const chartHeight = 38 + sorted.length * rowHeight;
-          svg.setAttribute("viewBox", `0 0 900 ${chartHeight}`);
-          const rows = sorted.map((project, i) => {
-            const y = 32 + i * rowHeight;
-            const isWatchOut = project.order === 9;
-            if (isWatchOut) {
-              return `
-                <text x="22" y="${y}" font-size="10.8" fill="${colors.text}" font-weight="700">${escapeHtml(chartProjectName(project.name))}</text>
-                <rect x="500" y="${y - 16}" width="180" height="22" rx="8" fill="#fff7ed" stroke="#fdba74"/>
-                <text x="512" y="${y - 1}" font-size="9.8" fill="${colors.watchOut}" font-weight="800">Đề xuất bỏ ra Danh mục theo dõi</text>
-              `;
-            }
-            const known = Number.isFinite(project.progress);
-            const barX = 500;
-            const barW = 190;
-            const w = known ? Math.max(4, project.progress / 100 * barW) : barW;
-            const fill = known ? colors.public : colors.unknown;
-            const ratio = compactAreaRatio(project);
-            const deadline = chartDeadline(project);
-            const percentText = known ? `${project.progress.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%` : "Chưa có %";
-            return `
-              <text x="22" y="${y}" font-size="10.8" fill="${colors.text}" font-weight="700">${escapeHtml(chartProjectName(project.name))}</text>
-              <rect x="${barX}" y="${y - 14}" width="${barW}" height="18" rx="7" fill="#e7edf2"/>
-              <rect x="${barX}" y="${y - 14}" width="${w}" height="18" rx="7" fill="${fill}"/>
-              <text x="706" y="${y}" font-size="9.2" font-weight="800">
-                <tspan fill="${colors.text}">${percentText}</tspan>
-                ${ratio ? `<tspan dx="4" fill="${colors.ratio}">(${escapeHtml(ratio)})</tspan>` : ""}
-                ${deadline ? `<tspan dx="5" fill="#1d4ed8">- mốc HT: ${escapeHtml(deadline)}</tspan>` : ""}
-              </text>
-            `;
-          }).join("");
-          svg.innerHTML = `<rect x="0" y="0" width="900" height="${chartHeight}" fill="transparent"/>${rows}`;'''
-          html, _ = re.subn(old_fixed_chart, responsive_chart, html, count=1)
-
-          if html != original:
-              path.write_text(html, encoding="utf-8")
-              print("Đã chuẩn hóa biểu đồ và thêm nhãn CT.02.")
-          else:
-              print("Biểu đồ tỷ lệ GPMB đã đúng layout và nhãn CT.02.")
-          PY
+      - name: Chuẩn hóa biểu đồ CT.02
+        run: python patch_ct02_chart.py --index index.html
 
       - name: Commit nếu có số liệu mới
         run: |
