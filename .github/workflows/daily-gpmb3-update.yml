@@ -8,6 +8,7 @@ on:
   push:
     paths:
       - ".github/workflows/daily-gpmb3-update.yml"
+      - "workflow-trigger.txt"
       - "work/latest_progress_data.json"
       - "update_dashboard_from_progress_json.py"
       - "update_dashboard_from_drive.py"
