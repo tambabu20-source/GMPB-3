@@ -9,8 +9,6 @@ on:
     paths:
       - ".github/workflows/daily-gpmb3-update.yml"
       - "workflow-trigger.txt"
-      - "work/latest_progress_data.json"
-      - "update_dashboard_from_progress_json.py"
       - "update_dashboard_from_drive.py"
 
 permissions:
@@ -28,13 +26,8 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Cập nhật dashboard từ dữ liệu mới hoặc Google Drive
-        run: |
-          if [ "${{ github.event_name }}" = "push" ] && [ -f work/latest_progress_data.json ] && [ "${{ github.event.head_commit.message }}" != "Chuyển nguồn tự động sang file Excel Google Drive" ]; then
-            python update_dashboard_from_progress_json.py --index index.html --data work/latest_progress_data.json
-          else
-            python update_dashboard_from_drive.py --index index.html
-          fi
+      - name: Cập nhật dashboard từ Google Drive
+        run: python update_dashboard_from_drive.py --index index.html
 
       - name: Chuẩn hóa biểu đồ tỷ lệ GPMB bản web
         run: |
