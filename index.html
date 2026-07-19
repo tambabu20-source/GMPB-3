@@ -1170,7 +1170,7 @@
         </article>
         <article class="card source-item">
           <strong>THEO DÕI TỔ CÔNG TÁC 03</strong>
-          <span class="hint">Nguồn cập nhật: file “PL Tien do (TB ket luan 326TB-UBND).xlsx” - Phụ lục tiến độ kèm Thông báo kết luận số 326/TB-UBND ngày 17/7/2026 của UBND tỉnh. Dashboard đã cập nhật số liệu, vướng mắc, kiến nghị, kế hoạch thực hiện và thời hạn bàn giao mặt bằng theo file nguồn ngày 17/7/2026. Đối soát Google Drive lúc 05:08 ngày 19/7/2026: file Office “THEO DÕI TỔ CÔNG TÁC 03.docx” (ID 1iJlA3Gs1eUH-q1qywqiiHf-c778PPYW-) được đọc raw bằng Google Drive connector, modified_time 17:41:31 ngày 17/7/2026 (UTC+7); tiêu đề bảng vẫn ghi 7/7/2026 và nội dung không mới hơn phụ lục ngày 17/7/2026, nên chỉ cập nhật audit, không thay dòng “Theo số liệu đến ngày”.</span>
+          <span class="hint">Nguồn cập nhật: file “PL Tien do (TB ket luan 326TB-UBND).xlsx” - Phụ lục tiến độ kèm Thông báo kết luận số 326/TB-UBND ngày 17/7/2026 của UBND tỉnh. Dashboard đã cập nhật số liệu, vướng mắc, kiến nghị, kế hoạch thực hiện và thời hạn bàn giao mặt bằng theo file nguồn ngày 17/7/2026.</span>
         </article>
         <article class="card source-item">
           <strong>Liên hệ trong tài liệu theo dõi</strong>
@@ -1687,28 +1687,31 @@
         svg.innerHTML = `<rect x="0" y="0" width="420" height="${height}" fill="transparent"/>${rows}`;
         return;
       }
-      svg.setAttribute("viewBox", "0 0 900 430");
-      const rows = sorted.map((project, i) => {
-        const y = 32 + i * 45;
-        const known = Number.isFinite(project.progress);
-        const barW = 250;
-        const w = known ? Math.max(4, project.progress / 100 * barW) : barW;
-        const fill = known ? colors.public : colors.unknown;
-        const ratio = compactAreaRatio(project);
-        const deadline = chartDeadline(project);
-        const percentText = known ? `${project.progress.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%` : "Chưa có %";
-        return `
-          <text x="22" y="${y}" font-size="11.2" fill="${colors.text}" font-weight="700">${escapeHtml(clipLabel(chartProjectName(project.name), 58))}</text>
-          <rect x="382" y="${y - 14}" width="${barW}" height="18" rx="7" fill="#e7edf2"/>
-          <rect x="382" y="${y - 14}" width="${w}" height="18" rx="7" fill="${fill}"/>
-          <text x="650" y="${y}" font-size="9.3" font-weight="800">
-            <tspan fill="${colors.text}">${percentText}</tspan>
-            ${ratio ? `<tspan dx="4" fill="${colors.ratio}">(${escapeHtml(ratio)})</tspan>` : ""}
-            ${deadline ? `<tspan dx="5" fill="#1d4ed8">- mốc HT: ${escapeHtml(deadline)}</tspan>` : ""}
-          </text>
-        `;
-      }).join("");
-      svg.innerHTML = `<rect x="0" y="0" width="900" height="430" fill="transparent"/>${rows}`;
+      const rowHeight = 48;
+const chartHeight = 38 + sorted.length * rowHeight;
+svg.setAttribute("viewBox", `0 0 900 ${chartHeight}`);
+const rows = sorted.map((project, i) => {
+  const y = 32 + i * rowHeight;
+  const known = Number.isFinite(project.progress);
+  const barX = 500;
+  const barW = 190;
+  const w = known ? Math.max(4, project.progress / 100 * barW) : barW;
+  const fill = known ? colors.public : colors.unknown;
+  const ratio = compactAreaRatio(project);
+  const deadline = chartDeadline(project);
+  const percentText = known ? `${project.progress.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%` : "Chưa có %";
+  return `
+    <text x="22" y="${y}" font-size="10.8" fill="${colors.text}" font-weight="700">${escapeHtml(chartProjectName(project.name))}</text>
+    <rect x="${barX}" y="${y - 14}" width="${barW}" height="18" rx="7" fill="#e7edf2"/>
+    <rect x="${barX}" y="${y - 14}" width="${w}" height="18" rx="7" fill="${fill}"/>
+    <text x="706" y="${y}" font-size="9.2" font-weight="800">
+      <tspan fill="${colors.text}">${percentText}</tspan>
+      ${ratio ? `<tspan dx="4" fill="${colors.ratio}">(${escapeHtml(ratio)})</tspan>` : ""}
+      ${deadline ? `<tspan dx="5" fill="#1d4ed8">- mốc HT: ${escapeHtml(deadline)}</tspan>` : ""}
+    </text>
+  `;
+}).join("");
+svg.innerHTML = `<rect x="0" y="0" width="900" height="${chartHeight}" fill="transparent"/>${rows}`;
     }
 
     ["q", "fundFilter", "ownerFilter"].forEach(id => {
