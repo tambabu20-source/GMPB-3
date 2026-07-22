@@ -14,6 +14,7 @@ on:
       - "patch_ct02_chart.py"
       - "patch_progress_safety.py"
       - "patch_locality_chart.py"
+      - "patch_project1_units.py"
 
 concurrency:
   group: gpmb3-dashboard-update
@@ -45,6 +46,9 @@ jobs:
 
       - name: Sửa tỷ lệ dự án 1 và thêm biểu đồ địa phương
         run: python patch_locality_chart.py --index index.html
+
+      - name: Chuẩn hóa đơn vị mét dự án 1
+        run: python patch_project1_units.py --index index.html
 
       - name: Commit nếu có số liệu mới
         run: |
