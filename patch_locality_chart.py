@@ -15,17 +15,38 @@ CHART_CARD = '''        <article class="card card-pad locality-progress-card">
 
 CSS = '''
     .chart.locality-progress-chart {
-      min-height: 300px;
+      min-height: 360px;
     }
 
     @media (max-width: 720px) {
       .chart.locality-progress-chart {
-        min-height: 360px;
+        min-height: 520px;
       }
     }
 '''
 
-JS = r'''    function extractLocalityRows() {
+JS = r'''    function compactLocalityProjectName(name) {
+      return chartProjectName(name)
+        .replace(/^Tuyến đường giao thông từ\s+/i, "")
+        .replace(/^Tuyến đường bộ ven biển,?\s*/i, "Ven biển ")
+        .replace(/^Đầu tư xây dựng và kinh doanh kết cấu hạ tầng\s+/i, "")
+        .replace(/^Đầu tư xây dựng\s+/i, "")
+        .replace(/Khu kinh tế Vân Phong/i, "KKT Vân Phong")
+        .replace(/Thành phố Tuy Hòa/i, "TP Tuy Hòa")
+        .replace(/Khu đô thị mới Nam/i, "KĐT mới Nam")
+        .trim();
+    }
+
+    function compactLocalityArea(text) {
+      const value = String(text || "").trim().replace(/\s+/g, " ");
+      if (!value) return "";
+      return value
+        .replace(/\s*Km\b/g, "km")
+        .replace(/\s*ha\b/g, "ha")
+        .replace(/\s*m\b/g, "m");
+    }
+
+    function extractLocalityRows() {
       const rows = [];
       const rx = /([^|\n:]+):\s*đã bàn giao\s*([^;]+);\s*([\d.,]+)%+;\s*chưa bàn giao\s*([^;]+);\s*còn\s*([\d.,]+)%+/gi;
       projects.forEach(project => {
@@ -37,10 +58,10 @@ JS = r'''    function extractLocalityRows() {
           if (!locality || !Number.isFinite(progress)) continue;
           rows.push({
             locality,
-            projectName: chartProjectName(project.name),
+            projectName: compactLocalityProjectName(project.name),
             progress: Math.max(0, Math.min(100, progress)),
-            cleared: match[2].trim(),
-            remaining: match[4].trim(),
+            cleared: compactLocalityArea(match[2]),
+            remaining: compactLocalityArea(match[4]),
             remainingRate: match[5].trim()
           });
         }
@@ -51,53 +72,49 @@ JS = r'''    function extractLocalityRows() {
     function drawLocalityProgressChart() {
       const svg = document.getElementById("localityProgressChart");
       if (!svg) return;
-      const grouped = new Map();
-      extractLocalityRows().forEach(row => {
-        if (!grouped.has(row.locality)) grouped.set(row.locality, []);
-        grouped.get(row.locality).push(row);
-      });
-      const data = Array.from(grouped, ([locality, rows]) => {
-        const avg = rows.reduce((sum, row) => sum + row.progress, 0) / rows.length;
-        return { locality, rows, avg };
-      }).sort((a, b) => b.avg - a.avg || a.locality.localeCompare(b.locality, "vi"));
+      const data = extractLocalityRows().sort((a, b) => b.progress - a.progress || a.locality.localeCompare(b.locality, "vi"));
       if (!data.length) {
         svg.innerHTML = `<text x="24" y="48" font-size="14" fill="${colors.muted}" font-weight="700">Chưa có dữ liệu địa phương để thống kê.</text>`;
         return;
       }
       const isMobile = window.matchMedia("(max-width: 720px)").matches;
       const width = isMobile ? 390 : 900;
-      const rowHeight = isMobile ? 54 : 42;
-      const top = isMobile ? 28 : 34;
-      const left = isMobile ? 18 : 250;
-      const right = isMobile ? 24 : 190;
+      const rowHeight = isMobile ? 76 : 48;
+      const top = isMobile ? 30 : 34;
+      const left = isMobile ? 18 : 275;
+      const right = isMobile ? 24 : 300;
       const barW = width - left - right;
-      const height = top + data.length * rowHeight + 26;
+      const height = top + data.length * rowHeight + 28;
       svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
       svg.innerHTML = data.map((item, index) => {
         const y = top + index * rowHeight;
-        const barY = isMobile ? y + 19 : y - 10;
-        const localityLines = wrapSvgText(item.locality, isMobile ? 33 : 38);
-        const title = localityLines.map((line, lineIndex) => `<tspan x="${isMobile ? 18 : 22}" dy="${lineIndex ? 14 : 0}">${escapeHtml(line)}</tspan>`).join("");
-        const progress = Math.max(0, Math.min(100, item.avg));
+        const progress = Math.max(0, Math.min(100, item.progress));
         const fillW = Math.max(4, progress / 100 * barW);
         const color = progress >= 90 ? colors.public : progress >= 70 ? "#2f855a" : progress > 0 ? "#d97706" : colors.unknown;
         const percent = `${progress.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%`;
-        const meta = `${item.rows.length} dòng/dự án`;
+        const detail = `${percent} (${item.cleared} - Dự án ${item.projectName})`;
         if (isMobile) {
+          const localityLines = wrapSvgText(item.locality, 38).slice(0, 2);
+          const title = localityLines.map((line, lineIndex) => `<tspan x="18" dy="${lineIndex ? 14 : 0}">${escapeHtml(line)}</tspan>`).join("");
+          const barY = y + localityLines.length * 14 + 8;
+          const detailLines = wrapSvgText(detail, 48).slice(0, 2);
+          const detailText = detailLines.map((line, lineIndex) => `<tspan x="18" dy="${lineIndex ? 13 : 0}">${escapeHtml(line)}</tspan>`).join("");
           return `
             <text x="18" y="${y}" font-size="11.8" fill="${colors.text}" font-weight="800">${title}</text>
-            <rect x="${left}" y="${barY}" width="${barW}" height="13" rx="6.5" fill="#e7edf2"/>
-            <rect x="${left}" y="${barY}" width="${fillW}" height="13" rx="6.5" fill="${color}"/>
-            <text x="${left}" y="${barY + 29}" font-size="11" fill="${colors.text}" font-weight="800">${percent}</text>
-            <text x="${width - 24}" y="${barY + 29}" font-size="10.5" fill="${colors.muted}" font-weight="700" text-anchor="end">${meta}</text>
+            <rect x="18" y="${barY}" width="348" height="13" rx="6.5" fill="#e7edf2"/>
+            <rect x="18" y="${barY}" width="${Math.max(4, progress / 100 * 348)}" height="13" rx="6.5" fill="${color}"/>
+            <text x="18" y="${barY + 30}" font-size="10.8" fill="${colors.text}" font-weight="800">${detailText}</text>
           `;
         }
+        const localityLines = wrapSvgText(item.locality, 45).slice(0, 2);
+        const title = localityLines.map((line, lineIndex) => `<tspan x="22" dy="${lineIndex ? 13 : 0}">${escapeHtml(line)}</tspan>`).join("");
+        const detailLines = wrapSvgText(detail, 58).slice(0, 2);
+        const detailText = detailLines.map((line, lineIndex) => `<tspan x="${left + barW + 22}" dy="${lineIndex ? 13 : 0}">${escapeHtml(line)}</tspan>`).join("");
         return `
-          <text x="22" y="${y}" font-size="12" fill="${colors.text}" font-weight="800">${title}</text>
-          <rect x="${left}" y="${barY}" width="${barW}" height="16" rx="8" fill="#e7edf2"/>
-          <rect x="${left}" y="${barY}" width="${fillW}" height="16" rx="8" fill="${color}"/>
-          <text x="${left + barW + 24}" y="${barY + 12}" font-size="12" fill="${colors.text}" font-weight="800">${percent}</text>
-          <text x="${width - 24}" y="${barY + 12}" font-size="11" fill="${colors.muted}" font-weight="700" text-anchor="end">${meta}</text>
+          <text x="22" y="${y}" font-size="11.5" fill="${colors.text}" font-weight="800">${title}</text>
+          <rect x="${left}" y="${y - 13}" width="${barW}" height="16" rx="8" fill="#e7edf2"/>
+          <rect x="${left}" y="${y - 13}" width="${fillW}" height="16" rx="8" fill="${color}"/>
+          <text x="${left + barW + 22}" y="${y - 2}" font-size="10.5" fill="${colors.text}" font-weight="800">${detailText}</text>
         `;
       }).join("");
     }
@@ -174,18 +191,39 @@ def patch_markup(html: str) -> str:
         </article>
 ''' + CHART_CARD,
         )
+    html = re.sub(r"\n\s*\.chart\.locality-progress-chart \{[\s\S]*?\n\s*\}\n\n\s*@media \(max-width: 720px\) \{\n\s*\.chart\.locality-progress-chart \{[\s\S]*?\n\s*\}\n\s*\}\n", "\n" + CSS + "\n", html, count=1)
     if ".chart.locality-progress-chart" not in html:
         html = html.replace("    .chart.progress-percent-chart {", CSS + "\n    .chart.progress-percent-chart {")
     return html
 
 
+def replace_function_block(html: str, function_name: str, replacement: str) -> str:
+    marker = f"    function {function_name}()"
+    start = html.find(marker)
+    if start == -1:
+        return html
+    brace = html.find("{", start)
+    depth = 0
+    for i in range(brace, len(html)):
+        if html[i] == "{":
+            depth += 1
+        elif html[i] == "}":
+            depth -= 1
+            if depth == 0:
+                return html[:start] + replacement.rstrip() + "\n" + html[i + 1:]
+    return html
+
+
 def patch_js(html: str) -> str:
     if "function drawLocalityProgressChart" in html:
-        return html
+        html = replace_function_block(html, "extractLocalityRows", "")
+        html = replace_function_block(html, "drawLocalityProgressChart", "")
+        html = re.sub(r"\n{3,}", "\n\n", html)
     html = html.replace("    function drawProgressPercentChart() {", JS + "\n    function drawProgressPercentChart() {")
-    html = html.replace("        drawProgressPercentChart();", "        drawProgressPercentChart();\n        drawLocalityProgressChart();")
-    html = html.replace("    drawProgressPercentChart();", "    drawProgressPercentChart();\n    drawLocalityProgressChart();")
-    html = html.replace("        if (event.target && event.target.id === id) drawProgressPercentChart();", "        if (event.target && event.target.id === id) {\n          drawProgressPercentChart();\n          drawLocalityProgressChart();\n        }")
+    html = re.sub(r"(?:\n\s*drawLocalityProgressChart\(\);)+", "\n    drawLocalityProgressChart();", html)
+    html = html.replace("        drawProgressPercentChart();\n    drawLocalityProgressChart();", "        drawProgressPercentChart();\n        drawLocalityProgressChart();")
+    if "drawLocalityProgressChart();" not in html:
+        html = html.replace("    drawProgressPercentChart();", "    drawProgressPercentChart();\n    drawLocalityProgressChart();")
     return html
 
 
@@ -207,7 +245,7 @@ def main() -> int:
     new_html = patch_html(html)
     if new_html != html:
         path.write_text(new_html, encoding="utf-8")
-        print("Đã sửa tỷ lệ dự án 1 và thêm biểu đồ địa phương.")
+        print("Đã sửa tỷ lệ dự án 1 và cập nhật biểu đồ địa phương.")
     else:
         print("Dashboard đã có biểu đồ địa phương và tỷ lệ dự án 1 hợp lệ.")
     return 0
