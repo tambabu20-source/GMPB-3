@@ -1736,6 +1736,24 @@
         .replace(/\s*m\b/g, "m");
     }
 
+    function readLocalityNumber(text, unit) {
+      const raw = String(text || "").trim();
+      if (String(unit || "").toLowerCase() === "m" && /^\d{1,3}(?:\.\d{3})+$/.test(raw)) {
+        return Number(raw.replace(/\./g, ""));
+      }
+      return Number(raw.replace(",", "."));
+    }
+
+    function calculateLocalityProgress(clearedText) {
+      const match = String(clearedText || "").match(/([\d.,]+)\s*\/\s*([\d.,]+)\s*([a-zA-Z]*)/);
+      if (!match) return null;
+      const unit = match[3] || "";
+      const cleared = readLocalityNumber(match[1], unit);
+      const total = readLocalityNumber(match[2], unit);
+      if (!Number.isFinite(cleared) || !Number.isFinite(total) || total <= 0) return null;
+      return Math.max(0, Math.min(100, cleared / total * 100));
+    }
+
     function extractLocalityRows() {
       const rows = [];
       const rx = /([^|\n:]+):\s*đã bàn giao\s*([^;]+);\s*([\d.,]+)%+;\s*chưa bàn giao\s*([^;]+);\s*còn\s*([\d.,]+)%+/gi;
@@ -1744,7 +1762,9 @@
         let match;
         while ((match = rx.exec(note)) !== null) {
           const locality = match[1].replace(/^Địa bàn\/tiến độ:\s*/i, "").trim();
-          const progress = parseFloat(String(match[3]).replace(",", "."));
+          const sourceProgress = parseFloat(String(match[3]).replace(",", "."));
+          const calculatedProgress = calculateLocalityProgress(match[2]);
+          const progress = Number.isFinite(calculatedProgress) ? calculatedProgress : sourceProgress;
           if (!locality || !Number.isFinite(progress)) continue;
           rows.push({
             locality,
