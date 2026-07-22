@@ -123,8 +123,9 @@ def replace_projects(html: str, projects: list[dict]) -> str:
 
 def parse_project1_localities(note: str) -> list[tuple[float, float]]:
     rows: list[tuple[float, float]] = []
+    normalized = re.sub(r"([\d.,]+)\s*([a-zA-Z]+)\s*/\s*([\d.,]+)\s*\2", r"\1/\3 \2", note)
     rx = re.compile(r"đã bàn giao\s*([\d.,]+)(?:\s*/\s*([\d.,]+))?\s*([a-zA-Z]*)\s*;\s*([\d.,]+)%+", re.I)
-    for match in rx.finditer(note):
+    for match in rx.finditer(normalized):
         cleared = float(match.group(1).replace(",", "."))
         total = float(match.group(2).replace(",", ".")) if match.group(2) else None
         unit = (match.group(3) or "").lower()
