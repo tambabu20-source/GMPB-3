@@ -337,7 +337,6 @@
       }
     }
 
-
     .chart.progress-percent-chart {
       height: 430px;
     }
@@ -946,18 +945,6 @@
       .chart.owner-fund-chart {
         height: 360px;
       }
-
-  
-    .chart.locality-progress-chart {
-      min-height: 300px;
-    }
-
-    @media (max-width: 720px) {
-      .chart.locality-progress-chart {
-        min-height: 360px;
-      }
-    }
-
     .chart.progress-percent-chart {
         height: 980px;
       }
@@ -1930,7 +1917,7 @@ svg.innerHTML = `<rect x="0" y="0" width="900" height="${chartHeight}" fill="tra
       resizeTimer = setTimeout(() => {
         drawOwnerFundChart();
         drawProgressPercentChart();
-        drawLocalityProgressChart();
+    drawLocalityProgressChart();
       }, 120);
     });
 
