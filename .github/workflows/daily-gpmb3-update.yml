@@ -17,6 +17,7 @@ on:
       - "patch_project1_units.py"
       - "patch_locality_mobile_css.py"
       - "patch_locality_ratio_calc.py"
+      - "patch_locality_percent_style.py"
 
 concurrency:
   group: gpmb3-dashboard-update
@@ -54,6 +55,9 @@ jobs:
 
       - name: Tối ưu hiển thị biểu đồ địa phương
         run: python patch_locality_mobile_css.py --index index.html
+
+      - name: Làm nổi bật tỷ lệ tổng trong biểu đồ địa phương
+        run: python patch_locality_percent_style.py --index index.html
 
       - name: Chuẩn hóa đơn vị mét dự án 1
         run: python patch_project1_units.py --index index.html
