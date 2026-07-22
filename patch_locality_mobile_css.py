@@ -7,12 +7,12 @@ from pathlib import Path
 
 CSS = '''
     .chart.locality-progress-chart {
-      min-height: 360px;
+      min-height: 430px;
     }
 
     @media (max-width: 720px) {
       .chart.locality-progress-chart {
-        min-height: 520px;
+        min-height: 760px;
       }
     }
 '''
