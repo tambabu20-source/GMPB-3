@@ -11,6 +11,7 @@ on:
       - "workflow-trigger.txt"
       - "update_dashboard_from_drive.py"
       - "patch_ct02_chart.py"
+      - "patch_progress_safety.py"
 
 concurrency:
   group: gpmb3-dashboard-update
@@ -33,6 +34,9 @@ jobs:
 
       - name: Cập nhật dashboard từ Google Drive
         run: python update_dashboard_from_drive.py --index index.html
+
+      - name: Rà soát tỷ lệ GPMB
+        run: python patch_progress_safety.py --index index.html
 
       - name: Chuẩn hóa biểu đồ CT.02
         run: python patch_ct02_chart.py --index index.html
