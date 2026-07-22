@@ -15,12 +15,12 @@ CHART_CARD = '''        <article class="card card-pad locality-progress-card">
 
 CSS = '''
     .chart.locality-progress-chart {
-      min-height: 360px;
+      min-height: 430px;
     }
 
     @media (max-width: 720px) {
       .chart.locality-progress-chart {
-        min-height: 520px;
+        min-height: 760px;
       }
     }
 '''
@@ -34,6 +34,8 @@ JS = r'''    function compactLocalityProjectName(name) {
         .replace(/Khu kinh tế Vân Phong/i, "KKT Vân Phong")
         .replace(/Thành phố Tuy Hòa/i, "TP Tuy Hòa")
         .replace(/Khu đô thị mới Nam/i, "KĐT mới Nam")
+        .replace(/đoạn kết nối huyện Tuy An -/i, "Tuy An -")
+        .replace(/đoạn phía Bắc cầu An Hải/i, "Bắc cầu An Hải")
         .trim();
     }
 
@@ -46,6 +48,24 @@ JS = r'''    function compactLocalityProjectName(name) {
         .replace(/\s*m\b/g, "m");
     }
 
+    function readLocalityNumber(text, unit) {
+      const raw = String(text || "").trim();
+      if (String(unit || "").toLowerCase() === "m" && /^\d{1,3}(?:\.\d{3})+$/.test(raw)) {
+        return Number(raw.replace(/\./g, ""));
+      }
+      return Number(raw.replace(",", "."));
+    }
+
+    function calculateLocalityProgress(clearedText) {
+      const match = String(clearedText || "").match(/([\d.,]+)\s*\/\s*([\d.,]+)\s*([a-zA-Z]*)/);
+      if (!match) return null;
+      const unit = match[3] || "";
+      const cleared = readLocalityNumber(match[1], unit);
+      const total = readLocalityNumber(match[2], unit);
+      if (!Number.isFinite(cleared) || !Number.isFinite(total) || total <= 0) return null;
+      return Math.max(0, Math.min(100, cleared / total * 100));
+    }
+
     function extractLocalityRows() {
       const rows = [];
       const rx = /([^|\n:]+):\s*đã bàn giao\s*([^;]+);\s*([\d.,]+)%+;\s*chưa bàn giao\s*([^;]+);\s*còn\s*([\d.,]+)%+/gi;
@@ -54,7 +74,9 @@ JS = r'''    function compactLocalityProjectName(name) {
         let match;
         while ((match = rx.exec(note)) !== null) {
           const locality = match[1].replace(/^Địa bàn\/tiến độ:\s*/i, "").trim();
-          const progress = parseFloat(String(match[3]).replace(",", "."));
+          const sourceProgress = parseFloat(String(match[3]).replace(",", "."));
+          const calculatedProgress = calculateLocalityProgress(match[2]);
+          const progress = Number.isFinite(calculatedProgress) ? calculatedProgress : sourceProgress;
           if (!locality || !Number.isFinite(progress)) continue;
           rows.push({
             locality,
@@ -69,20 +91,35 @@ JS = r'''    function compactLocalityProjectName(name) {
       return rows;
     }
 
+    function localityDetail(rows, maxChars) {
+      return rows.map(row => {
+        const percent = row.progress.toLocaleString("vi-VN", { maximumFractionDigits: 2 });
+        return `${percent}% ${row.cleared} - ${row.projectName}`;
+      }).join("; ");
+    }
+
     function drawLocalityProgressChart() {
       const svg = document.getElementById("localityProgressChart");
       if (!svg) return;
-      const data = extractLocalityRows().sort((a, b) => b.progress - a.progress || a.locality.localeCompare(b.locality, "vi"));
+      const grouped = new Map();
+      extractLocalityRows().forEach(row => {
+        if (!grouped.has(row.locality)) grouped.set(row.locality, []);
+        grouped.get(row.locality).push(row);
+      });
+      const data = Array.from(grouped, ([locality, rows]) => {
+        const avg = rows.reduce((sum, row) => sum + row.progress, 0) / rows.length;
+        return { locality, rows, progress: Math.max(0, Math.min(100, avg)) };
+      }).sort((a, b) => b.progress - a.progress || a.locality.localeCompare(b.locality, "vi"));
       if (!data.length) {
         svg.innerHTML = `<text x="24" y="48" font-size="14" fill="${colors.muted}" font-weight="700">Chưa có dữ liệu địa phương để thống kê.</text>`;
         return;
       }
       const isMobile = window.matchMedia("(max-width: 720px)").matches;
-      const width = isMobile ? 390 : 900;
-      const rowHeight = isMobile ? 76 : 48;
-      const top = isMobile ? 30 : 34;
-      const left = isMobile ? 18 : 275;
-      const right = isMobile ? 24 : 300;
+      const width = isMobile ? 420 : 900;
+      const rowHeight = isMobile ? 86 : 54;
+      const top = isMobile ? 28 : 34;
+      const left = isMobile ? 18 : 260;
+      const right = isMobile ? 24 : 285;
       const barW = width - left - right;
       const height = top + data.length * rowHeight + 28;
       svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
@@ -92,29 +129,29 @@ JS = r'''    function compactLocalityProjectName(name) {
         const fillW = Math.max(4, progress / 100 * barW);
         const color = progress >= 90 ? colors.public : progress >= 70 ? "#2f855a" : progress > 0 ? "#d97706" : colors.unknown;
         const percent = `${progress.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%`;
-        const detail = `${percent} (${item.cleared} - Dự án ${item.projectName})`;
+        const detail = localityDetail(item.rows);
         if (isMobile) {
-          const localityLines = wrapSvgText(item.locality, 38).slice(0, 2);
+          const localityLines = wrapSvgText(item.locality, 44).slice(0, 2);
           const title = localityLines.map((line, lineIndex) => `<tspan x="18" dy="${lineIndex ? 14 : 0}">${escapeHtml(line)}</tspan>`).join("");
           const barY = y + localityLines.length * 14 + 8;
-          const detailLines = wrapSvgText(detail, 48).slice(0, 2);
+          const detailLines = wrapSvgText(`${percent} (${detail})`, 52).slice(0, 2);
           const detailText = detailLines.map((line, lineIndex) => `<tspan x="18" dy="${lineIndex ? 13 : 0}">${escapeHtml(line)}</tspan>`).join("");
           return `
             <text x="18" y="${y}" font-size="11.8" fill="${colors.text}" font-weight="800">${title}</text>
-            <rect x="18" y="${barY}" width="348" height="13" rx="6.5" fill="#e7edf2"/>
-            <rect x="18" y="${barY}" width="${Math.max(4, progress / 100 * 348)}" height="13" rx="6.5" fill="${color}"/>
-            <text x="18" y="${barY + 30}" font-size="10.8" fill="${colors.text}" font-weight="800">${detailText}</text>
+            <rect x="18" y="${barY}" width="372" height="16" rx="7" fill="#e7edf2"/>
+            <rect x="18" y="${barY}" width="${Math.max(4, progress / 100 * 372)}" height="16" rx="7" fill="${color}"/>
+            <text x="18" y="${barY + 32}" font-size="10.6" fill="${colors.text}" font-weight="800">${detailText}</text>
           `;
         }
-        const localityLines = wrapSvgText(item.locality, 45).slice(0, 2);
+        const localityLines = wrapSvgText(item.locality, 42).slice(0, 2);
         const title = localityLines.map((line, lineIndex) => `<tspan x="22" dy="${lineIndex ? 13 : 0}">${escapeHtml(line)}</tspan>`).join("");
-        const detailLines = wrapSvgText(detail, 58).slice(0, 2);
+        const detailLines = wrapSvgText(`${percent} (${detail})`, 64).slice(0, 2);
         const detailText = detailLines.map((line, lineIndex) => `<tspan x="${left + barW + 22}" dy="${lineIndex ? 13 : 0}">${escapeHtml(line)}</tspan>`).join("");
         return `
           <text x="22" y="${y}" font-size="11.5" fill="${colors.text}" font-weight="800">${title}</text>
-          <rect x="${left}" y="${y - 13}" width="${barW}" height="16" rx="8" fill="#e7edf2"/>
-          <rect x="${left}" y="${y - 13}" width="${fillW}" height="16" rx="8" fill="${color}"/>
-          <text x="${left + barW + 22}" y="${y - 2}" font-size="10.5" fill="${colors.text}" font-weight="800">${detailText}</text>
+          <rect x="${left}" y="${y - 13}" width="${barW}" height="18" rx="7" fill="#e7edf2"/>
+          <rect x="${left}" y="${y - 13}" width="${fillW}" height="18" rx="7" fill="${color}"/>
+          <text x="${left + barW + 22}" y="${y - 2}" font-size="10.3" fill="${colors.text}" font-weight="800">${detailText}</text>
         `;
       }).join("");
     }
@@ -138,14 +175,20 @@ def replace_projects(html: str, projects: list[dict]) -> str:
     return re.sub(r"    const projects = \[[\s\S]*?\n\s*\];\n\n    const dataUpdatedDate", lambda _m: block, html, count=1)
 
 
+def parse_number(text: str, unit: str) -> float:
+    if unit.lower() == "m" and re.fullmatch(r"\d{1,3}(?:\.\d{3})+", text.strip()):
+      return float(text.replace(".", ""))
+    return float(text.replace(",", "."))
+
+
 def parse_project1_localities(note: str) -> list[tuple[float, float]]:
     rows: list[tuple[float, float]] = []
     normalized = re.sub(r"([\d.,]+)\s*([a-zA-Z]+)\s*/\s*([\d.,]+)\s*\2", r"\1/\3 \2", note)
     rx = re.compile(r"đã bàn giao\s*([\d.,]+)(?:\s*/\s*([\d.,]+))?\s*([a-zA-Z]*)\s*;\s*([\d.,]+)%+", re.I)
     for match in rx.finditer(normalized):
-        cleared = float(match.group(1).replace(",", "."))
-        total = float(match.group(2).replace(",", ".")) if match.group(2) else None
         unit = (match.group(3) or "").lower()
+        cleared = parse_number(match.group(1), unit)
+        total = parse_number(match.group(2), unit) if match.group(2) else None
         percent = float(match.group(4).replace(",", "."))
         if unit == "m":
             cleared = cleared / 1000
@@ -198,7 +241,7 @@ def patch_markup(html: str) -> str:
 
 
 def replace_function_block(html: str, function_name: str, replacement: str) -> str:
-    marker = f"    function {function_name}()"
+    marker = f"    function {function_name}"
     start = html.find(marker)
     if start == -1:
         return html
@@ -215,11 +258,18 @@ def replace_function_block(html: str, function_name: str, replacement: str) -> s
 
 
 def patch_js(html: str) -> str:
-    if "function drawLocalityProgressChart" in html:
-        html = replace_function_block(html, "extractLocalityRows", "")
-        html = replace_function_block(html, "drawLocalityProgressChart", "")
-        html = re.sub(r"\n{3,}", "\n\n", html)
-    html = html.replace("    function drawProgressPercentChart() {", JS + "\n    function drawProgressPercentChart() {")
+    for name in [
+        "compactLocalityProjectName",
+        "compactLocalityArea",
+        "readLocalityNumber",
+        "calculateLocalityProgress",
+        "extractLocalityRows",
+        "localityDetail",
+        "drawLocalityProgressChart",
+    ]:
+        html = replace_function_block(html, name, "")
+    html = re.sub(r"\n{3,}", "\n\n", html)
+    html = html.replace("    function drawProgressPercentChart() {", JS + "\n    function drawProgressPercentChart() {", 1)
     html = re.sub(r"(?:\n\s*drawLocalityProgressChart\(\);)+", "\n    drawLocalityProgressChart();", html)
     html = html.replace("        drawProgressPercentChart();\n    drawLocalityProgressChart();", "        drawProgressPercentChart();\n        drawLocalityProgressChart();")
     if "drawLocalityProgressChart();" not in html:
