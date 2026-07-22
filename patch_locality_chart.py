@@ -130,9 +130,9 @@ def parse_project1_localities(note: str) -> list[tuple[float, float]]:
         unit = (match.group(3) or "").lower()
         percent = float(match.group(4).replace(",", "."))
         if unit == "m":
-          cleared = cleared / 1000
-          if total is not None:
-            total = total / 1000
+            cleared = cleared / 1000
+            if total is not None:
+                total = total / 1000
         if total and total > 0:
             rows.append((min(cleared, total), total))
         elif percent <= 100:
@@ -141,28 +141,27 @@ def parse_project1_localities(note: str) -> list[tuple[float, float]]:
 
 
 def fix_project1(projects: list[dict]) -> bool:
-    changed = False
     project = next((p for p in projects if p.get("order") == 1), None)
     if not project:
         return False
-    note = str(project.get("note") or "")
-    rows = parse_project1_localities(note)
+    rows = parse_project1_localities(str(project.get("note") or ""))
     total_match = re.search(r"\d+(?:[,.]\d+)?", str(project.get("totalArea") or ""))
     total = float(total_match.group(0).replace(",", ".")) if total_match else None
-    if len(rows) >= 2 and total:
-        cleared_sum = sum(row[0] for row in rows)
-        denom_sum = sum(row[1] for row in rows)
-        if denom_sum > 0:
-            progress = max(0, min(99.99, cleared_sum / denom_sum * 100))
-            cleared = total * progress / 100
-            remaining = max(0, total - cleared)
-            old = json.dumps(project, ensure_ascii=False, sort_keys=True)
-            project["progress"] = round(progress, 2)
-            project["clearedArea"] = f"{fmt(cleared)}/{fmt(total)} km"
-            project["remainingArea"] = f"{fmt(remaining)} km"
-            project["remainingRate"] = f"{fmt(100 - progress, 2)}%"
-            changed = old != json.dumps(project, ensure_ascii=False, sort_keys=True)
-    return changed
+    if len(rows) < 2 or not total:
+        return False
+    cleared_sum = sum(row[0] for row in rows)
+    denom_sum = sum(row[1] for row in rows)
+    if denom_sum <= 0:
+        return False
+    progress = max(0, min(99.99, cleared_sum / denom_sum * 100))
+    cleared = total * progress / 100
+    remaining = max(0, total - cleared)
+    old = json.dumps(project, ensure_ascii=False, sort_keys=True)
+    project["progress"] = round(progress, 2)
+    project["clearedArea"] = f"{fmt(cleared)}/{fmt(total)} km"
+    project["remainingArea"] = f"{fmt(remaining)} km"
+    project["remainingRate"] = f"{fmt(100 - progress, 2)}%"
+    return old != json.dumps(project, ensure_ascii=False, sort_keys=True)
 
 
 def patch_markup(html: str) -> str:
@@ -180,8 +179,9 @@ def patch_markup(html: str) -> str:
 
 
 def patch_js(html: str) -> str:
-    if "function drawLocalityProgressChart" not in html:
-        html = html.replace("    function drawProgressPercentChart() {", JS + "\n    function drawProgressPercentChart() {")
+    if "function drawLocalityProgressChart" in html:
+        return html
+    html = html.replace("    function drawProgressPercentChart() {", JS + "\n    function drawProgressPercentChart() {")
     html = html.replace("        drawProgressPercentChart();", "        drawProgressPercentChart();\n        drawLocalityProgressChart();")
     html = html.replace("    drawProgressPercentChart();", "    drawProgressPercentChart();\n    drawLocalityProgressChart();")
     html = html.replace("        if (event.target && event.target.id === id) drawProgressPercentChart();", "        if (event.target && event.target.id === id) {\n          drawProgressPercentChart();\n          drawLocalityProgressChart();\n        }")
@@ -190,8 +190,7 @@ def patch_js(html: str) -> str:
 
 def patch_html(html: str) -> str:
     projects = extract_projects(html)
-    changed_projects = fix_project1(projects)
-    if changed_projects:
+    if fix_project1(projects):
         html = replace_projects(html, projects)
     html = patch_markup(html)
     html = patch_js(html)
