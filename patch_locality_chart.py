@@ -41,7 +41,7 @@ JS = r'''    function compactLocalityProjectName(name) {
 
     function compactLocalityArea(text) {
       const value = String(text || "").trim().replace(/\s+/g, " ");
-      if (!value) return "";
+      if (!value || !value.includes("/")) return "đang rà soát";
       return value
         .replace(/\s*Km\b/g, "km")
         .replace(/\s*ha\b/g, "ha")
