@@ -68,19 +68,34 @@ def patch_project1(projects: list[dict]) -> bool:
     return old != json.dumps(project, ensure_ascii=False, sort_keys=True)
 
 
+def update_average_kpi(html: str, projects: list[dict]) -> str:
+    known = [float(p["progress"]) for p in projects if isinstance(p.get("progress"), (int, float))]
+    if not known:
+        return html
+    average = fmt(sum(known) / len(known), 2) + "%"
+    return re.sub(
+        r"(<span>Bình quân \d+ dự án có %</span>\s*<b>)[^<]+(</b>)",
+        lambda m: m.group(1) + average + m.group(2),
+        html,
+        count=1,
+    )
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Chuẩn hóa đơn vị mét và tỷ lệ dự án 1.")
+    parser = argparse.ArgumentParser(description="Chuẩn hóa đơn vị mét, tỷ lệ dự án 1 và bình quân tiến độ.")
     parser.add_argument("--index", default="index.html")
     args = parser.parse_args()
     path = Path(args.index)
     html = path.read_text(encoding="utf-8")
     projects = extract_projects(html)
-    changed = patch_project1(projects)
-    if changed:
-        path.write_text(replace_projects(html, projects), encoding="utf-8")
-        print("Đã chuẩn hóa tỷ lệ dự án 1 theo các địa phương.")
+    project_changed = patch_project1(projects)
+    new_html = replace_projects(html, projects) if project_changed else html
+    new_html = update_average_kpi(new_html, projects)
+    if new_html != html:
+        path.write_text(new_html, encoding="utf-8")
+        print("Đã chuẩn hóa tỷ lệ dự án 1 và bình quân tiến độ.")
     else:
-        print("Tỷ lệ dự án 1 đã hợp lệ.")
+        print("Tỷ lệ dự án 1 và bình quân tiến độ đã hợp lệ.")
     return 0
 
 
