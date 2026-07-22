@@ -10,6 +10,7 @@ on:
       - ".github/workflows/daily-gpmb3-update.yml"
       - "workflow-trigger.txt"
       - "update_dashboard_from_drive.py"
+      - "update_dashboard_from_drive_v2.py"
       - "patch_ct02_chart.py"
       - "patch_progress_safety.py"
 
@@ -33,7 +34,7 @@ jobs:
           python-version: "3.11"
 
       - name: Cập nhật dashboard từ Google Drive
-        run: python update_dashboard_from_drive.py --index index.html
+        run: python update_dashboard_from_drive_v2.py --index index.html
 
       - name: Rà soát tỷ lệ GPMB
         run: python patch_progress_safety.py --index index.html
