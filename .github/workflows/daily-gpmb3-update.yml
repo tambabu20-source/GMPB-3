@@ -16,6 +16,7 @@ on:
       - "patch_locality_chart.py"
       - "patch_project1_units.py"
       - "patch_locality_mobile_css.py"
+      - "patch_locality_ratio_calc.py"
 
 concurrency:
   group: gpmb3-dashboard-update
@@ -47,6 +48,9 @@ jobs:
 
       - name: Sửa tỷ lệ dự án 1 và thêm biểu đồ địa phương
         run: python patch_locality_chart.py --index index.html
+
+      - name: Tính tỷ lệ địa phương từ diện tích đã bàn giao
+        run: python patch_locality_ratio_calc.py --index index.html
 
       - name: Tối ưu hiển thị biểu đồ địa phương
         run: python patch_locality_mobile_css.py --index index.html
