@@ -1,4 +1,4 @@
-Kích hoạt cập nhật dashboard GPMB Tổ công tác số 3: 2026-07-23 10:45 Asia/Ho_Chi_Minh
+Kích hoạt cập nhật dashboard GPMB Tổ công tác số 3: 2026-07-23 21:10 Asia/Ho_Chi_Minh
 Nguồn Drive modified_time: 2026-07-22T13:09:17.093Z
 Nguồn ghi cập nhật tiến độ đến ngày: 20/7/2026
-Điều chỉnh biểu đồ địa phương: bỏ nhãn diện tích khi chưa có số liệu, đưa mô tả xuống dưới thanh để không mất chữ.
+Điều chỉnh biểu đồ địa phương: tăng khoảng cách nhóm trên điện thoại, thêm đường phân cách mảnh, tăng nhẹ tên xã/phường trên máy tính.
