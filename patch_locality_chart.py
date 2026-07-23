@@ -5,14 +5,7 @@ import argparse
 import re
 from pathlib import Path
 
-CHART_CARD = '''        <article class="card card-pad locality-progress-card">
-          <div class="chart-title">
-            <h3>Thống kê tiến độ GPMB theo địa phương</h3>
-          </div>
-          <svg id="localityProgressChart" class="chart locality-progress-chart" viewBox="0 0 900 320" role="img" aria-label="Biểu đồ thống kê tiến độ GPMB theo địa phương"></svg>
-        </article>'''
-
-CSS = '''
+CSS = """
     .chart.locality-progress-chart {
       min-height: 430px;
     }
@@ -22,9 +15,19 @@ CSS = '''
         min-height: 760px;
       }
     }
-'''
 
-JS = r'''    function compactLocalityProjectName(name) {
+"""
+
+CARD = """        <article class="card card-pad locality-progress-card">
+          <div class="chart-title">
+            <h3>Thống kê tiến độ GPMB theo địa phương</h3>
+          </div>
+          <svg id="localityProgressChart" class="chart locality-progress-chart" viewBox="0 0 900 320" role="img" aria-label="Biểu đồ thống kê tiến độ GPMB theo địa phương"></svg>
+        </article>
+"""
+
+JS = r'''
+    function compactLocalityProjectName(name) {
       return chartProjectName(name)
         .replace(/^Tuyến đường giao thông từ\s+/i, "")
         .replace(/^Tuyến đường bộ ven biển,?\s*/i, "Ven biển ")
@@ -116,15 +119,15 @@ JS = r'''    function compactLocalityProjectName(name) {
       const width = isMobile ? 420 : 900;
       const top = isMobile ? 28 : 34;
       const left = isMobile ? 18 : 260;
-      const right = isMobile ? 24 : 260;
+      const right = isMobile ? 24 : 60;
       const barW = width - left - right;
       const layouts = data.map(item => {
         const detail = localityDetail(item.rows);
         const titleLines = wrapSvgText(item.locality, isMobile ? 44 : 42).slice(0, 2);
-        const detailLines = wrapSvgText(`(${detail})`, isMobile ? 56 : 74).slice(0, isMobile ? 5 : 4);
+        const detailLines = wrapSvgText(`(${detail})`, isMobile ? 56 : 96).slice(0, isMobile ? 5 : 5);
         const rowHeight = isMobile
           ? 82 + detailLines.length * 16 + Math.max(0, titleLines.length - 1) * 16
-          : 48 + detailLines.length * 15 + Math.max(0, titleLines.length - 1) * 14;
+          : 54 + detailLines.length * 15 + Math.max(0, titleLines.length - 1) * 14;
         return { item, titleLines, detailLines, rowHeight };
       });
       let cursor = top;
@@ -144,54 +147,43 @@ JS = r'''    function compactLocalityProjectName(name) {
           const title = titleLines.map((line, lineIndex) => `<tspan x="18" dy="${lineIndex ? 14 : 0}">${escapeHtml(line)}</tspan>`).join("");
           const barY = y + 28 + titleLines.length * 16;
           const detailText = detailLines.map((line, lineIndex) => lineIndex === 0 ? `<tspan dx="6" font-size="10.1" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>` : `<tspan x="18" dy="16" font-size="10.1" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>`).join("");
-          return `
-            <text x="18" y="${y}" font-size="11.8" fill="${colors.text}" font-weight="800">${title}</text>
-            <rect x="18" y="${barY}" width="372" height="16" rx="7" fill="#e7edf2"/>
-            <rect x="18" y="${barY}" width="${Math.max(4, progress / 100 * 372)}" height="16" rx="7" fill="${color}"/>
-            <text x="18" y="${barY + 32}" font-weight="800"><tspan font-size="13.2" fill="${color}">${percent}</tspan>${detailText}</text>
-          `;
+          return `<text x="18" y="${y}" font-size="11.8" fill="${colors.text}" font-weight="800">${title}</text><rect x="18" y="${barY}" width="372" height="16" rx="7" fill="#e7edf2"/><rect x="18" y="${barY}" width="${Math.max(4, progress / 100 * 372)}" height="16" rx="7" fill="${color}"/><text x="18" y="${barY + 32}" font-weight="800"><tspan font-size="13.2" fill="${color}">${percent}</tspan>${detailText}</text>`;
         }
         const title = titleLines.map((line, lineIndex) => `<tspan x="22" dy="${lineIndex ? 13 : 0}">${escapeHtml(line)}</tspan>`).join("");
-        const detailText = detailLines.map((line, lineIndex) => lineIndex === 0 ? `<tspan dx="6" font-size="9.6" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>` : `<tspan x="${left + barW + 22}" dy="15" font-size="9.6" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>`).join("");
-        return `
-          <text x="22" y="${y}" font-size="11.5" fill="${colors.text}" font-weight="800">${title}</text>
-          <rect x="${left}" y="${y - 13}" width="${barW}" height="18" rx="7" fill="#e7edf2"/>
-          <rect x="${left}" y="${y - 13}" width="${fillW}" height="18" rx="7" fill="${color}"/>
-          <text x="${left + barW + 22}" y="${y - 2}" font-weight="800"><tspan font-size="12.8" fill="${color}">${percent}</tspan>${detailText}</text>
-        `;
+        const detailText = detailLines.map((line, lineIndex) => lineIndex === 0 ? `<tspan dx="6" font-size="9.6" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>` : `<tspan x="${left}" dy="15" font-size="9.6" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>`).join("");
+        return `<text x="22" y="${y}" font-size="11.5" fill="${colors.text}" font-weight="800">${title}</text><rect x="${left}" y="${y - 13}" width="${barW}" height="18" rx="7" fill="#e7edf2"/><rect x="${left}" y="${y - 13}" width="${fillW}" height="18" rx="7" fill="${color}"/><text x="${left}" y="${y + 24}" font-weight="800"><tspan font-size="12.8" fill="${color}">${percent}</tspan>${detailText}</text>`;
       }).join("");
     }
 '''
 
 
-def patch_markup(html: str) -> str:
-    if "localityProgressChart" not in html:
-        html = html.replace(
-            '''          <svg id="progressPercentChart" class="chart progress-percent-chart" viewBox="0 0 900 340" role="img" aria-label="Biểu đồ tỷ lệ phần trăm tiến độ GPMB các dự án"></svg>
-        </article>''',
-            '''          <svg id="progressPercentChart" class="chart progress-percent-chart" viewBox="0 0 900 340" role="img" aria-label="Biểu đồ tỷ lệ phần trăm tiến độ GPMB các dự án"></svg>
-        </article>
-''' + CHART_CARD,
-        )
-    html = re.sub(r"\n\s*\.chart\.locality-progress-chart \{[\s\S]*?\n\s*\}\n\n\s*@media \(max-width: 720px\) \{\n\s*\.chart\.locality-progress-chart \{[\s\S]*?\n\s*\}\n\s*\}\n", "\n" + CSS + "\n", html, count=1)
-    if ".chart.locality-progress-chart" not in html:
-        html = html.replace("    .chart.progress-percent-chart {", CSS + "\n    .chart.progress-percent-chart {")
-    return html
-
-
-def replace_function_block(html: str, function_name: str, replacement: str) -> str:
-    marker = f"    function {function_name}"
+def remove_function(html: str, name: str) -> str:
+    marker = f"    function {name}"
     start = html.find(marker)
     if start == -1:
         return html
     next_function = html.find("\n    function ", start + len(marker))
     if next_function == -1:
-        return html[:start] + replacement.rstrip() + "\n"
-    return html[:start] + replacement.rstrip() + "\n" + html[next_function:]
+        return html[:start]
+    return html[:start] + html[next_function:]
 
 
-def patch_js(html: str) -> str:
-    for name in [
+def patch_html(html: str) -> str:
+    html = re.sub(
+        r"\n\s*\.chart\.locality-progress-chart \{[\s\S]*?\n\s*\}\s*\n\s*@media \(max-width: 720px\) \{[\s\S]*?\.chart\.locality-progress-chart \{[\s\S]*?\n\s*\}\s*\n\s*\}\s*\n",
+        "\n" + CSS,
+        html,
+        count=1,
+    )
+    if ".chart.locality-progress-chart" not in html:
+        html = html.replace("    .chart.progress-percent-chart {", CSS + "    .chart.progress-percent-chart {", 1)
+    if "localityProgressChart" not in html:
+        html = html.replace(
+            '          <svg id="progressPercentChart" class="chart progress-percent-chart" viewBox="0 0 900 340" role="img" aria-label="Biểu đồ tỷ lệ phần trăm tiến độ GPMB các dự án"></svg>\n        </article>',
+            '          <svg id="progressPercentChart" class="chart progress-percent-chart" viewBox="0 0 900 340" role="img" aria-label="Biểu đồ tỷ lệ phần trăm tiến độ GPMB các dự án"></svg>\n        </article>\n' + CARD.rstrip(),
+            1,
+        )
+    for fn in [
         "compactLocalityProjectName",
         "compactLocalityArea",
         "readLocalityNumber",
@@ -200,24 +192,16 @@ def patch_js(html: str) -> str:
         "localityDetail",
         "drawLocalityProgressChart",
     ]:
-        html = replace_function_block(html, name, "")
-    html = re.sub(r"\n{3,}", "\n\n", html)
+        html = remove_function(html, fn)
     html = html.replace("    function drawProgressPercentChart() {", JS + "\n    function drawProgressPercentChart() {", 1)
-    html = re.sub(r"(?:\n\s*drawLocalityProgressChart\(\);)+", "\n    drawLocalityProgressChart();", html)
-    html = html.replace("        drawProgressPercentChart();\n    drawLocalityProgressChart();", "        drawProgressPercentChart();\n        drawLocalityProgressChart();")
+    html = re.sub(r"(drawProgressPercentChart\(\);\s*)(?:\n\s*drawLocalityProgressChart\(\);)+", lambda m: m.group(1) + "\n        drawLocalityProgressChart();", html)
     if "drawLocalityProgressChart();" not in html:
         html = html.replace("    drawProgressPercentChart();", "    drawProgressPercentChart();\n    drawLocalityProgressChart();")
     return html
 
 
-def patch_html(html: str) -> str:
-    html = patch_markup(html)
-    html = patch_js(html)
-    return html
-
-
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Thêm và chỉnh biểu đồ tiến độ GPMB theo địa phương.")
+    parser = argparse.ArgumentParser(description="Cập nhật biểu đồ tiến độ GPMB theo địa phương.")
     parser.add_argument("--index", default="index.html")
     args = parser.parse_args()
     path = Path(args.index)
@@ -227,7 +211,7 @@ def main() -> int:
         path.write_text(new_html, encoding="utf-8")
         print("Đã cập nhật biểu đồ địa phương.")
     else:
-        print("Dashboard đã có biểu đồ địa phương đúng định dạng.")
+        print("Biểu đồ địa phương đã đúng định dạng.")
     return 0
 
 
