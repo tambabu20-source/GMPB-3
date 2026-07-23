@@ -1729,7 +1729,7 @@
 
     function compactLocalityArea(text) {
       const value = String(text || "").trim().replace(/\s+/g, " ");
-      if (!value || !value.includes("/")) return "diện tích đang rà soát";
+      if (!value || !value.includes("/")) return "";
       return value
         .replace(/\s*Km\b/g, "km")
         .replace(/\s*ha\b/g, "ha")
@@ -1780,7 +1780,8 @@
     function localityDetail(rows) {
       return rows.map(row => {
         const percent = row.progress.toLocaleString("vi-VN", { maximumFractionDigits: 2 });
-        return `${percent}% ${row.cleared} - ${row.projectName}`;
+        const area = row.cleared ? ` ${row.cleared}` : "";
+        return `${percent}%${area} - ${row.projectName}`;
       }).join("; ");
     }
 
@@ -1811,8 +1812,8 @@
         const titleLines = wrapSvgText(item.locality, isMobile ? 44 : 42).slice(0, 2);
         const detailLines = wrapSvgText(`(${detail})`, isMobile ? 56 : 74).slice(0, isMobile ? 5 : 4);
         const rowHeight = isMobile
-          ? 58 + detailLines.length * 13 + Math.max(0, titleLines.length - 1) * 14
-          : 38 + detailLines.length * 13 + Math.max(0, titleLines.length - 1) * 13;
+          ? 82 + detailLines.length * 16 + Math.max(0, titleLines.length - 1) * 16
+          : 48 + detailLines.length * 15 + Math.max(0, titleLines.length - 1) * 14;
         return { item, titleLines, detailLines, rowHeight };
       });
       let cursor = top;
@@ -1830,8 +1831,8 @@
         const percent = `${progress.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%`;
         if (isMobile) {
           const title = titleLines.map((line, lineIndex) => `<tspan x="18" dy="${lineIndex ? 14 : 0}">${escapeHtml(line)}</tspan>`).join("");
-          const barY = y + 24 + titleLines.length * 14;
-          const detailText = detailLines.map((line, lineIndex) => lineIndex === 0 ? `<tspan dx="6" font-size="10.3" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>` : `<tspan x="18" dy="13" font-size="10.3" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>`).join("");
+          const barY = y + 28 + titleLines.length * 16;
+          const detailText = detailLines.map((line, lineIndex) => lineIndex === 0 ? `<tspan dx="6" font-size="10.1" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>` : `<tspan x="18" dy="16" font-size="10.1" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>`).join("");
           return `
             <text x="18" y="${y}" font-size="11.8" fill="${colors.text}" font-weight="800">${title}</text>
             <rect x="18" y="${barY}" width="372" height="16" rx="7" fill="#e7edf2"/>
@@ -1840,7 +1841,7 @@
           `;
         }
         const title = titleLines.map((line, lineIndex) => `<tspan x="22" dy="${lineIndex ? 13 : 0}">${escapeHtml(line)}</tspan>`).join("");
-        const detailText = detailLines.map((line, lineIndex) => lineIndex === 0 ? `<tspan dx="6" font-size="9.8" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>` : `<tspan x="${left + barW + 22}" dy="13" font-size="9.8" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>`).join("");
+        const detailText = detailLines.map((line, lineIndex) => lineIndex === 0 ? `<tspan dx="6" font-size="9.6" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>` : `<tspan x="${left + barW + 22}" dy="15" font-size="9.6" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>`).join("");
         return `
           <text x="22" y="${y}" font-size="11.5" fill="${colors.text}" font-weight="800">${title}</text>
           <rect x="${left}" y="${y - 13}" width="${barW}" height="18" rx="7" fill="#e7edf2"/>
