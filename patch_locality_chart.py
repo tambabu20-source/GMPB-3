@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import re
 from pathlib import Path
 
@@ -41,7 +40,7 @@ JS = r'''    function compactLocalityProjectName(name) {
 
     function compactLocalityArea(text) {
       const value = String(text || "").trim().replace(/\s+/g, " ");
-      if (!value || !value.includes("/")) return "đang rà soát";
+      if (!value || !value.includes("/")) return "diện tích đang rà soát";
       return value
         .replace(/\s*Km\b/g, "km")
         .replace(/\s*ha\b/g, "ha")
@@ -68,7 +67,7 @@ JS = r'''    function compactLocalityProjectName(name) {
 
     function extractLocalityRows() {
       const rows = [];
-      const rx = /([^|\n:]+):\s*đã bàn giao\s*([^;]+);\s*([\d.,]+)%+;\s*chưa bàn giao\s*([^;]+);\s*còn\s*([\d.,]+)%+/gi;
+      const rx = /([^|\n:;]+)[:;]\s*đã bàn giao\s*([^;]+);\s*([\d.,]+)%+;\s*chưa bàn giao\s*([^;]+);\s*còn\s*([\d.,]+)%+/gi;
       projects.forEach(project => {
         const note = String(project.note || "");
         let match;
@@ -82,16 +81,14 @@ JS = r'''    function compactLocalityProjectName(name) {
             locality,
             projectName: compactLocalityProjectName(project.name),
             progress: Math.max(0, Math.min(100, progress)),
-            cleared: compactLocalityArea(match[2]),
-            remaining: compactLocalityArea(match[4]),
-            remainingRate: match[5].trim()
+            cleared: compactLocalityArea(match[2])
           });
         }
       });
       return rows;
     }
 
-    function localityDetail(rows, maxChars) {
+    function localityDetail(rows) {
       return rows.map(row => {
         const percent = row.progress.toLocaleString("vi-VN", { maximumFractionDigits: 2 });
         return `${percent}% ${row.cleared} - ${row.projectName}`;
@@ -116,113 +113,54 @@ JS = r'''    function compactLocalityProjectName(name) {
       }
       const isMobile = window.matchMedia("(max-width: 720px)").matches;
       const width = isMobile ? 420 : 900;
-      const rowHeight = isMobile ? 86 : 54;
       const top = isMobile ? 28 : 34;
       const left = isMobile ? 18 : 260;
-      const right = isMobile ? 24 : 285;
+      const right = isMobile ? 24 : 260;
       const barW = width - left - right;
-      const height = top + data.length * rowHeight + 28;
+      const layouts = data.map(item => {
+        const detail = localityDetail(item.rows);
+        const titleLines = wrapSvgText(item.locality, isMobile ? 44 : 42).slice(0, 2);
+        const detailLines = wrapSvgText(`(${detail})`, isMobile ? 56 : 74).slice(0, isMobile ? 5 : 4);
+        const rowHeight = isMobile
+          ? 58 + detailLines.length * 13 + Math.max(0, titleLines.length - 1) * 14
+          : 38 + detailLines.length * 13 + Math.max(0, titleLines.length - 1) * 13;
+        return { item, titleLines, detailLines, rowHeight };
+      });
+      let cursor = top;
+      const positioned = layouts.map(layout => {
+        const y = cursor;
+        cursor += layout.rowHeight;
+        return { ...layout, y };
+      });
+      const height = cursor + 24;
       svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-      svg.innerHTML = data.map((item, index) => {
-        const y = top + index * rowHeight;
+      svg.innerHTML = positioned.map(({ item, titleLines, detailLines, y }) => {
         const progress = Math.max(0, Math.min(100, item.progress));
         const fillW = Math.max(4, progress / 100 * barW);
         const color = progress >= 90 ? colors.public : progress >= 70 ? "#2f855a" : progress > 0 ? "#d97706" : colors.unknown;
         const percent = `${progress.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%`;
-        const detail = localityDetail(item.rows);
         if (isMobile) {
-          const localityLines = wrapSvgText(item.locality, 44).slice(0, 2);
-          const title = localityLines.map((line, lineIndex) => `<tspan x="18" dy="${lineIndex ? 14 : 0}">${escapeHtml(line)}</tspan>`).join("");
-          const barY = y + localityLines.length * 14 + 8;
-          const detailLines = wrapSvgText(`${percent} (${detail})`, 52).slice(0, 2);
-          const detailText = detailLines.map((line, lineIndex) => `<tspan x="18" dy="${lineIndex ? 13 : 0}">${escapeHtml(line)}</tspan>`).join("");
+          const title = titleLines.map((line, lineIndex) => `<tspan x="18" dy="${lineIndex ? 14 : 0}">${escapeHtml(line)}</tspan>`).join("");
+          const barY = y + 24 + titleLines.length * 14;
+          const detailText = detailLines.map((line, lineIndex) => lineIndex === 0 ? `<tspan dx="6" font-size="10.3" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>` : `<tspan x="18" dy="13" font-size="10.3" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>`).join("");
           return `
             <text x="18" y="${y}" font-size="11.8" fill="${colors.text}" font-weight="800">${title}</text>
             <rect x="18" y="${barY}" width="372" height="16" rx="7" fill="#e7edf2"/>
             <rect x="18" y="${barY}" width="${Math.max(4, progress / 100 * 372)}" height="16" rx="7" fill="${color}"/>
-            <text x="18" y="${barY + 32}" font-size="10.6" fill="${colors.text}" font-weight="800">${detailText}</text>
+            <text x="18" y="${barY + 32}" font-weight="800"><tspan font-size="13.2" fill="${color}">${percent}</tspan>${detailText}</text>
           `;
         }
-        const localityLines = wrapSvgText(item.locality, 42).slice(0, 2);
-        const title = localityLines.map((line, lineIndex) => `<tspan x="22" dy="${lineIndex ? 13 : 0}">${escapeHtml(line)}</tspan>`).join("");
-        const detailLines = wrapSvgText(`${percent} (${detail})`, 64).slice(0, 2);
-        const detailText = detailLines.map((line, lineIndex) => `<tspan x="${left + barW + 22}" dy="${lineIndex ? 13 : 0}">${escapeHtml(line)}</tspan>`).join("");
+        const title = titleLines.map((line, lineIndex) => `<tspan x="22" dy="${lineIndex ? 13 : 0}">${escapeHtml(line)}</tspan>`).join("");
+        const detailText = detailLines.map((line, lineIndex) => lineIndex === 0 ? `<tspan dx="6" font-size="9.8" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>` : `<tspan x="${left + barW + 22}" dy="13" font-size="9.8" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>`).join("");
         return `
           <text x="22" y="${y}" font-size="11.5" fill="${colors.text}" font-weight="800">${title}</text>
           <rect x="${left}" y="${y - 13}" width="${barW}" height="18" rx="7" fill="#e7edf2"/>
           <rect x="${left}" y="${y - 13}" width="${fillW}" height="18" rx="7" fill="${color}"/>
-          <text x="${left + barW + 22}" y="${y - 2}" font-size="10.3" fill="${colors.text}" font-weight="800">${detailText}</text>
+          <text x="${left + barW + 22}" y="${y - 2}" font-weight="800"><tspan font-size="12.8" fill="${color}">${percent}</tspan>${detailText}</text>
         `;
       }).join("");
     }
 '''
-
-
-def fmt(value: float, digits: int = 4) -> str:
-    return f"{value:.{digits}f}".rstrip("0").rstrip(".").replace(".", ",")
-
-
-def extract_projects(html: str) -> list[dict]:
-    match = re.search(r"const projects = (\[[\s\S]*?\n\s*\]);\n\n\s*const dataUpdatedDate", html)
-    if not match:
-        raise SystemExit("Không tìm thấy mảng projects trong index.html")
-    return json.loads(match.group(1))
-
-
-def replace_projects(html: str, projects: list[dict]) -> str:
-    payload = json.dumps(projects, ensure_ascii=False, indent=6)
-    block = "    const projects = " + "\n    ".join(payload.splitlines()) + ";\n\n    const dataUpdatedDate"
-    return re.sub(r"    const projects = \[[\s\S]*?\n\s*\];\n\n    const dataUpdatedDate", lambda _m: block, html, count=1)
-
-
-def parse_number(text: str, unit: str) -> float:
-    if unit.lower() == "m" and re.fullmatch(r"\d{1,3}(?:\.\d{3})+", text.strip()):
-      return float(text.replace(".", ""))
-    return float(text.replace(",", "."))
-
-
-def parse_project1_localities(note: str) -> list[tuple[float, float]]:
-    rows: list[tuple[float, float]] = []
-    normalized = re.sub(r"([\d.,]+)\s*([a-zA-Z]+)\s*/\s*([\d.,]+)\s*\2", r"\1/\3 \2", note)
-    rx = re.compile(r"đã bàn giao\s*([\d.,]+)(?:\s*/\s*([\d.,]+))?\s*([a-zA-Z]*)\s*;\s*([\d.,]+)%+", re.I)
-    for match in rx.finditer(normalized):
-        unit = (match.group(3) or "").lower()
-        cleared = parse_number(match.group(1), unit)
-        total = parse_number(match.group(2), unit) if match.group(2) else None
-        percent = float(match.group(4).replace(",", "."))
-        if unit == "m":
-            cleared = cleared / 1000
-            if total is not None:
-                total = total / 1000
-        if total and total > 0:
-            rows.append((min(cleared, total), total))
-        elif percent <= 100:
-            rows.append((percent, 100.0))
-    return rows
-
-
-def fix_project1(projects: list[dict]) -> bool:
-    project = next((p for p in projects if p.get("order") == 1), None)
-    if not project:
-        return False
-    rows = parse_project1_localities(str(project.get("note") or ""))
-    total_match = re.search(r"\d+(?:[,.]\d+)?", str(project.get("totalArea") or ""))
-    total = float(total_match.group(0).replace(",", ".")) if total_match else None
-    if len(rows) < 2 or not total:
-        return False
-    cleared_sum = sum(row[0] for row in rows)
-    denom_sum = sum(row[1] for row in rows)
-    if denom_sum <= 0:
-        return False
-    progress = max(0, min(99.99, cleared_sum / denom_sum * 100))
-    cleared = total * progress / 100
-    remaining = max(0, total - cleared)
-    old = json.dumps(project, ensure_ascii=False, sort_keys=True)
-    project["progress"] = round(progress, 2)
-    project["clearedArea"] = f"{fmt(cleared)}/{fmt(total)} km"
-    project["remainingArea"] = f"{fmt(remaining)} km"
-    project["remainingRate"] = f"{fmt(100 - progress, 2)}%"
-    return old != json.dumps(project, ensure_ascii=False, sort_keys=True)
 
 
 def patch_markup(html: str) -> str:
@@ -245,16 +183,10 @@ def replace_function_block(html: str, function_name: str, replacement: str) -> s
     start = html.find(marker)
     if start == -1:
         return html
-    brace = html.find("{", start)
-    depth = 0
-    for i in range(brace, len(html)):
-        if html[i] == "{":
-            depth += 1
-        elif html[i] == "}":
-            depth -= 1
-            if depth == 0:
-                return html[:start] + replacement.rstrip() + "\n" + html[i + 1:]
-    return html
+    next_function = html.find("\n    function ", start + len(marker))
+    if next_function == -1:
+        return html[:start] + replacement.rstrip() + "\n"
+    return html[:start] + replacement.rstrip() + "\n" + html[next_function:]
 
 
 def patch_js(html: str) -> str:
@@ -278,16 +210,13 @@ def patch_js(html: str) -> str:
 
 
 def patch_html(html: str) -> str:
-    projects = extract_projects(html)
-    if fix_project1(projects):
-        html = replace_projects(html, projects)
     html = patch_markup(html)
     html = patch_js(html)
     return html
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Sửa tỷ lệ dự án 1 và thêm biểu đồ địa phương.")
+    parser = argparse.ArgumentParser(description="Thêm và chỉnh biểu đồ tiến độ GPMB theo địa phương.")
     parser.add_argument("--index", default="index.html")
     args = parser.parse_args()
     path = Path(args.index)
@@ -295,9 +224,9 @@ def main() -> int:
     new_html = patch_html(html)
     if new_html != html:
         path.write_text(new_html, encoding="utf-8")
-        print("Đã sửa tỷ lệ dự án 1 và cập nhật biểu đồ địa phương.")
+        print("Đã cập nhật biểu đồ địa phương.")
     else:
-        print("Dashboard đã có biểu đồ địa phương và tỷ lệ dự án 1 hợp lệ.")
+        print("Dashboard đã có biểu đồ địa phương đúng định dạng.")
     return 0
 
 
