@@ -1,4 +1,4 @@
-Kích hoạt cập nhật dashboard GPMB Tổ công tác số 3: 2026-07-26 10:56 Asia/Ho_Chi_Minh
+Kích hoạt cập nhật dashboard GPMB Tổ công tác số 3: 2026-07-26 16:00 Asia/Ho_Chi_Minh
 Nguồn Drive modified_time: kiểm tra theo workflow tự động
 Nguồn ghi cập nhật tiến độ đến ngày: 24/7/2026
-Điều chỉnh nhãn tuần qua: bổ sung khối lượng tăng trong ngoặc; nếu số liệu thấp hơn tuần trước thì hiển thị không thay đổi - cần rà soát số liệu.
+Yêu cầu: đồng bộ bản dashboard mới nhất lên link GitHub Pages; nhãn tuần qua nếu giảm thì hiển thị không thay đổi - cần rà soát số liệu.
