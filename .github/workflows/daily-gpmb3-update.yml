@@ -13,6 +13,7 @@ on:
       - "update_dashboard_from_drive_v2.py"
       - "patch_ct02_chart.py"
       - "patch_progress_safety.py"
+      - "patch_progress_regression_guard.py"
       - "patch_locality_chart.py"
       - "patch_project1_units.py"
       - "patch_latest_20260724_progress.py"
@@ -39,11 +40,17 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Lưu số liệu đang công khai để đối chiếu
+        run: cp index.html index-before-update.html
+
       - name: Cập nhật dashboard từ Google Drive
         run: python update_dashboard_from_drive_v2.py --index index.html
 
       - name: Rà soát tỷ lệ GPMB
         run: python patch_progress_safety.py --index index.html
+
+      - name: Chặn lùi tiến độ nếu nguồn nhập thấp hơn số đã công khai
+        run: python patch_progress_regression_guard.py --index index.html --baseline index-before-update.html
 
       - name: Chuẩn hóa biểu đồ CT.02
         run: python patch_ct02_chart.py --index index.html
@@ -80,6 +87,9 @@ jobs:
                   sys.exit(0)
           subprocess.check_call([sys.executable, 'patch_latest_20260724_progress.py', '--index', 'index.html'])
           PY
+
+      - name: Kiểm tra lần cuối chống lùi tiến độ sau các bước chuẩn hóa
+        run: python patch_progress_regression_guard.py --index index.html --baseline index-before-update.html
 
       - name: Commit nếu có số liệu mới
         run: |
