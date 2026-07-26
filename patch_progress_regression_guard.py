@@ -12,7 +12,6 @@ FIELDS_TO_KEEP = [
     "clearedArea",
     "remainingArea",
     "remainingRate",
-    "note",
 ]
 
 PUBLISHED_FLOORS = {
