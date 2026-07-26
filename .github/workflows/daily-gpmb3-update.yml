@@ -22,6 +22,7 @@ on:
       - "patch_locality_percent_style.py"
       - "patch_current_timeline.py"
       - "patch_weekly_progress_delta.py"
+      - "patch_weekly_project_chart.py"
 
 concurrency:
   group: gpmb3-dashboard-update
@@ -80,6 +81,9 @@ jobs:
 
       - name: Bổ sung diễn biến tiến độ 07 ngày
         run: python patch_weekly_progress_delta.py --index index.html
+
+      - name: Bổ sung diễn biến tuần qua cho biểu đồ dự án
+        run: python patch_weekly_project_chart.py --index index.html
 
       - name: Kiểm tra lần cuối chống lùi tiến độ sau các bước chuẩn hóa
         run: python patch_progress_regression_guard.py --index index.html --baseline index-before-update.html
