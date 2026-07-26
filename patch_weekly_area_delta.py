@@ -5,7 +5,7 @@ import argparse
 import re
 from pathlib import Path
 
-PROJECT_CLEARED_BLOCK = '''    const weeklyProjectCleared = {
+PROJECT_CLEARED = '''    const weeklyProjectCleared = {
       1: "13,24/14,67 km",
       2: "6,69/7,48 km",
       3: "0/3,4 km",
@@ -18,7 +18,7 @@ PROJECT_CLEARED_BLOCK = '''    const weeklyProjectCleared = {
     };
 '''
 
-LOCALITY_CLEARED_BLOCK = '''    const weeklyLocalityCleared = {
+LOCALITY_CLEARED = '''    const weeklyLocalityCleared = {
       "xã Tuy An Đông": { km: 6.89 },
       "xã Tuy An Nam": { km: 3.93 },
       "xã Ô Loan": { km: 7.34 },
@@ -28,7 +28,7 @@ LOCALITY_CLEARED_BLOCK = '''    const weeklyLocalityCleared = {
     };
 '''
 
-WEEKLY_HELPERS = '''    function formatPct(value, digits = 2) {
+HELPERS = '''    function formatPct(value, digits = 2) {
       return Number(value).toLocaleString("vi-VN", { maximumFractionDigits: digits });
     }
 
@@ -51,8 +51,8 @@ WEEKLY_HELPERS = '''    function formatPct(value, digits = 2) {
       if (!current || !baseline || current.unit !== baseline.unit) return "";
       const diff = current.amount - baseline.amount;
       if (Math.abs(diff) < 0.0005) return `(0 ${current.unit})`;
-      const sign = diff > 0 ? "+" : "-";
-      return `(${sign}${formatAreaValue(Math.abs(diff))} ${current.unit})`;
+      if (diff < 0) return "";
+      return `(+${formatAreaValue(diff)} ${current.unit})`;
     }
 
     function aggregateClearedByUnit(rows) {
@@ -70,8 +70,9 @@ WEEKLY_HELPERS = '''    function formatPct(value, digits = 2) {
       const parts = units.map(unit => {
         const diff = (currentByUnit?.[unit] || 0) - (baselineByUnit?.[unit] || 0);
         if (Math.abs(diff) < 0.0005) return `0 ${unit}`;
-        return `${diff > 0 ? "+" : "-"}${formatAreaValue(Math.abs(diff))} ${unit}`;
-      });
+        if (diff < 0) return null;
+        return `+${formatAreaValue(diff)} ${unit}`;
+      }).filter(Boolean);
       return parts.length ? `(${parts.join("; ")})` : "";
     }
 
@@ -79,13 +80,13 @@ WEEKLY_HELPERS = '''    function formatPct(value, digits = 2) {
       if (!Number.isFinite(current) || !Number.isFinite(baseline)) return null;
       const diff = current - baseline;
       const suffix = areaText ? ` ${areaText}` : "";
+      if (diff < -0.05) {
+        return { label: "Tuần qua không thay đổi - cần rà soát số liệu", color: colors.weekDown, diff };
+      }
       if (Math.abs(diff) < 0.05) {
         return { label: `Tuần qua không thay đổi${suffix} so với ${weeklyBaselineDate}`, color: colors.weekFlat, diff: 0 };
       }
-      if (diff > 0) {
-        return { label: `Tuần qua tăng ${formatPct(diff)}% ${areaText} so với ${weeklyBaselineDate}`, color: colors.weekUp, diff };
-      }
-      return { label: `Tuần qua giảm ${formatPct(Math.abs(diff))}% ${areaText} - cần rà soát`, color: colors.weekDown, diff };
+      return { label: `Tuần qua tăng ${formatPct(diff)}% ${areaText} so với ${weeklyBaselineDate}`, color: colors.weekUp, diff };
     }
 
     function projectWeeklyMeta(project) {
@@ -94,23 +95,30 @@ WEEKLY_HELPERS = '''    function formatPct(value, digits = 2) {
 '''
 
 
-def insert_after_object(html: str, object_name: str, block: str) -> str:
+def add_after_object(html: str, object_name: str, block: str) -> str:
+    if object_name == "weeklyProjectProgress" and "weeklyProjectCleared" in html:
+        return html
+    if object_name == "weeklyLocalityProgress" and "weeklyLocalityCleared" in html:
+        return html
     pattern = rf'(    const {object_name} = \{{[\s\S]*?\n    \}};\n)'
-    return re.sub(pattern, r'\1' + block, html, count=1)
+    new_html, count = re.subn(pattern, lambda m: m.group(1) + block, html, count=1)
+    if count != 1:
+        raise SystemExit(f"Không tìm thấy {object_name} để chèn dữ liệu tuần trước.")
+    return new_html
 
 
 def patch_html(html: str) -> str:
-    if "weeklyProjectCleared" not in html:
-        html = insert_after_object(html, "weeklyProjectProgress", PROJECT_CLEARED_BLOCK)
-    if "weeklyLocalityCleared" not in html:
-        html = insert_after_object(html, "weeklyLocalityProgress", LOCALITY_CLEARED_BLOCK)
+    html = add_after_object(html, "weeklyProjectProgress", PROJECT_CLEARED)
+    html = add_after_object(html, "weeklyLocalityProgress", LOCALITY_CLEARED)
 
-    html = re.sub(
+    html, count = re.subn(
         r'    function formatPct\(value, digits = 2\) \{[\s\S]*?\n    function projectWeeklyMeta\(project\) \{[\s\S]*?\n    \}\n',
-        WEEKLY_HELPERS,
+        HELPERS,
         html,
         count=1,
     )
+    if count != 1:
+        raise SystemExit("Không thay được nhóm hàm tuần qua.")
 
     html = html.replace(
         '        const week = weeklyProgressMeta(item.progress, weeklyLocalityProgress[item.locality]);',
@@ -127,10 +135,10 @@ def main() -> int:
     html = path.read_text(encoding="utf-8")
     new_html = patch_html(html)
     if new_html != html:
-      path.write_text(new_html, encoding="utf-8")
-      print("Đã bổ sung khối lượng tăng/giảm tuần qua.")
+        path.write_text(new_html, encoding="utf-8")
+        print("Đã bổ sung khối lượng tăng/giảm tuần qua.")
     else:
-      print("Khối lượng tăng/giảm tuần qua đã sẵn sàng.")
+        print("Khối lượng tăng/giảm tuần qua đã sẵn sàng.")
     return 0
 
 
