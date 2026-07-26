@@ -20,6 +20,7 @@ on:
       - "patch_locality_mobile_css.py"
       - "patch_locality_ratio_calc.py"
       - "patch_locality_percent_style.py"
+      - "patch_current_timeline.py"
 
 concurrency:
   group: gpmb3-dashboard-update
@@ -71,22 +72,10 @@ jobs:
         run: python patch_project1_units.py --index index.html
 
       - name: Chuẩn hóa tiến độ theo phụ lục 24/7/2026
-        run: |
-          python - <<'PY'
-          from datetime import date
-          import re
-          import subprocess
-          import sys
+        run: python patch_latest_20260724_progress.py --index index.html
 
-          html = open('index.html', encoding='utf-8').read()
-          match = re.search(r'const dataUpdatedDate = "(\d{1,2})/(\d{1,2})/(\d{4})"', html)
-          if match:
-              day, month, year = map(int, match.groups())
-              if date(year, month, day) > date(2026, 7, 24):
-                  print('Bỏ qua chuẩn hóa 24/7 vì dashboard đã có dữ liệu mới hơn.')
-                  sys.exit(0)
-          subprocess.check_call([sys.executable, 'patch_latest_20260724_progress.py', '--index', 'index.html'])
-          PY
+      - name: Làm nổi bật mốc hiện nay trong khung 45 ngày
+        run: python patch_current_timeline.py --index index.html
 
       - name: Kiểm tra lần cuối chống lùi tiến độ sau các bước chuẩn hóa
         run: python patch_progress_regression_guard.py --index index.html --baseline index-before-update.html
