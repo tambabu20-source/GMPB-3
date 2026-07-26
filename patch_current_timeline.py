@@ -54,7 +54,7 @@ def patch(html: str) -> str:
             raise SystemExit("Không tìm thấy vị trí CSS của khung điều hành 45 ngày.")
         html = html.replace(STYLE_ANCHOR, STYLE_ANCHOR + STYLE_BLOCK, 1)
 
-    if "current-badge" in html:
+    if "card card-pad phase current-phase" in html and "<span class=\"current-badge\">Mốc hiện nay</span>" in html:
         return html
     if OLD_PHASE not in html:
         raise SystemExit("Không tìm thấy mốc Ngày 11-30 để tô nổi.")
