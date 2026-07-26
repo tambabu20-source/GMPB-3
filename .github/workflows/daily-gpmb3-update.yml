@@ -64,7 +64,22 @@ jobs:
         run: python patch_project1_units.py --index index.html
 
       - name: Chuẩn hóa tiến độ theo phụ lục 24/7/2026
-        run: python patch_latest_20260724_progress.py --index index.html
+        run: |
+          python - <<'PY'
+          from datetime import date
+          import re
+          import subprocess
+          import sys
+
+          html = open('index.html', encoding='utf-8').read()
+          match = re.search(r'const dataUpdatedDate = "(\d{1,2})/(\d{1,2})/(\d{4})"', html)
+          if match:
+              day, month, year = map(int, match.groups())
+              if date(year, month, day) > date(2026, 7, 24):
+                  print('Bỏ qua chuẩn hóa 24/7 vì dashboard đã có dữ liệu mới hơn.')
+                  sys.exit(0)
+          subprocess.check_call([sys.executable, 'patch_latest_20260724_progress.py', '--index', 'index.html'])
+          PY
 
       - name: Commit nếu có số liệu mới
         run: |
