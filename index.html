@@ -338,7 +338,7 @@
     }
 
     .chart.progress-percent-chart {
-      height: 430px;
+      height: 520px;
     }
 
     .chart.summary-status-chart {
@@ -979,7 +979,7 @@
       }
 
       .chart.progress-percent-chart {
-        height: 980px;
+        height: 1120px;
       }
 
       .progress-row {
@@ -1410,6 +1410,26 @@
     ];
 
     const dataUpdatedDate = "24/7/2026";
+    const weeklyBaselineDate = "17/7/2026";
+    const weeklyProjectProgress = {
+      1: 90.28,
+      2: 89.44,
+      3: 0,
+      4: 75.06,
+      5: 67.66,
+      6: 8.62,
+      7: 99.06,
+      8: 86.6,
+      9: null
+    };
+    const weeklyLocalityProgress = {
+      "xã Tuy An Đông": 63.15,
+      "xã Tuy An Nam": 85.43,
+      "xã Ô Loan": 97.58,
+      "phường Bình Kiến": 81.61,
+      "phường Phú Yên": 71.36,
+      "xã Hòa Xuân": 53.84
+    };
 
     const colors = {
       public: "#0b6b72",
@@ -1420,7 +1440,10 @@
       line: "#dce3ea",
       text: "#18212f",
       muted: "#5c697a",
-      watchOut: "#c2410c"
+      watchOut: "#c2410c",
+      weekUp: "#15803d",
+      weekFlat: "#5c697a",
+      weekDown: "#b45309"
     };
 
     const normalize = (value) => String(value || "")
@@ -1434,6 +1457,27 @@
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
+
+    function formatPct(value, digits = 2) {
+      return Number(value).toLocaleString("vi-VN", { maximumFractionDigits: digits });
+    }
+
+    function weeklyProgressMeta(current, baseline) {
+      if (!Number.isFinite(current) || !Number.isFinite(baseline)) return null;
+      const diff = current - baseline;
+      if (Math.abs(diff) < 0.05) {
+        return { label: `Tuần qua không thay đổi so với ${weeklyBaselineDate}`, color: colors.weekFlat, diff: 0 };
+      }
+      if (diff > 0) {
+        return { label: `Tuần qua tăng ${formatPct(diff)}% so với ${weeklyBaselineDate}`, color: colors.weekUp, diff };
+      }
+      return { label: `Tuần qua giảm ${formatPct(Math.abs(diff))}% - cần rà soát`, color: colors.weekDown, diff };
+    }
+
+    function projectWeeklyMeta(project) {
+      return weeklyProgressMeta(project.progress, weeklyProjectProgress[project.order]);
+    }
+
 
     function detailRows(project) {
       const rows = [
@@ -1845,10 +1889,11 @@
         const detail = localityDetail(item.rows);
         const titleLines = wrapSvgText(item.locality, isMobile ? 44 : 42).slice(0, 2);
         const detailLines = wrapSvgText(`(${detail})`, isMobile ? 50 : 96).slice(0, isMobile ? 6 : 5);
+        const week = weeklyProgressMeta(item.progress, weeklyLocalityProgress[item.locality]);
         const rowHeight = isMobile
-          ? 82 + detailLines.length * 17 + Math.max(0, titleLines.length - 1) * 14
-          : 54 + detailLines.length * 15 + Math.max(0, titleLines.length - 1) * 14;
-        return { item, titleLines, detailLines, rowHeight };
+          ? 99 + detailLines.length * 17 + Math.max(0, titleLines.length - 1) * 14
+          : 72 + detailLines.length * 15 + Math.max(0, titleLines.length - 1) * 14;
+        return { item, titleLines, detailLines, week, rowHeight };
       });
       let cursor = top;
       const positioned = layouts.map(layout => {
@@ -1858,7 +1903,7 @@
       });
       const height = cursor + 24;
       svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-      svg.innerHTML = positioned.map(({ item, titleLines, detailLines, y, rowHeight }) => {
+      svg.innerHTML = positioned.map(({ item, titleLines, detailLines, week, y, rowHeight }) => {
         const progress = Math.max(0, Math.min(100, item.progress));
         const fillW = Math.max(4, progress / 100 * barW);
         const color = progress >= 90 ? colors.public : progress >= 70 ? "#2f855a" : progress > 0 ? "#d97706" : colors.unknown;
@@ -1867,12 +1912,16 @@
           const title = titleLines.map((line, lineIndex) => `<tspan x="18" dy="${lineIndex ? 14 : 0}">${escapeHtml(line)}</tspan>`).join("");
           const barY = y + 22 + Math.max(0, titleLines.length - 1) * 14;
           const detailText = detailLines.map((line, lineIndex) => lineIndex === 0 ? `<tspan dx="7" font-size="9.8" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>` : `<tspan x="18" dy="17" font-size="9.8" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>`).join("");
+          const weekY = barY + 32 + Math.max(1, detailLines.length) * 17;
+          const weekText = week ? `<text x="18" y="${weekY}" font-size="10.5" fill="${week.color}" font-weight="800">${escapeHtml(week.label)}</text>` : "";
           const dividerY = y + rowHeight - 12;
-          return `<text x="18" y="${y}" font-size="12.8" fill="${colors.text}" font-weight="850">${title}</text><rect x="18" y="${barY}" width="372" height="16" rx="7" fill="#e7edf2"/><rect x="18" y="${barY}" width="${Math.max(4, progress / 100 * 372)}" height="16" rx="7" fill="${color}"/><text x="18" y="${barY + 32}" font-weight="800"><tspan font-size="13.8" fill="${color}">${percent}</tspan>${detailText}</text><line x1="18" x2="402" y1="${dividerY}" y2="${dividerY}" stroke="#e7edf2" stroke-width="1"/>`;
+          return `<text x="18" y="${y}" font-size="12.8" fill="${colors.text}" font-weight="850">${title}</text><rect x="18" y="${barY}" width="372" height="16" rx="7" fill="#e7edf2"/><rect x="18" y="${barY}" width="${Math.max(4, progress / 100 * 372)}" height="16" rx="7" fill="${color}"/><text x="18" y="${barY + 32}" font-weight="800"><tspan font-size="13.8" fill="${color}">${percent}</tspan>${detailText}</text>${weekText}<line x1="18" x2="402" y1="${dividerY}" y2="${dividerY}" stroke="#e7edf2" stroke-width="1"/>`;
         }
         const title = titleLines.map((line, lineIndex) => `<tspan x="22" dy="${lineIndex ? 14 : 0}">${escapeHtml(line)}</tspan>`).join("");
         const detailText = detailLines.map((line, lineIndex) => lineIndex === 0 ? `<tspan dx="6" font-size="9.6" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>` : `<tspan x="${left}" dy="15" font-size="9.6" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>`).join("");
-        return `<text x="22" y="${y}" font-size="12.4" fill="${colors.text}" font-weight="850">${title}</text><rect x="${left}" y="${y - 13}" width="${barW}" height="18" rx="7" fill="#e7edf2"/><rect x="${left}" y="${y - 13}" width="${fillW}" height="18" rx="7" fill="${color}"/><text x="${left}" y="${y + 24}" font-weight="800"><tspan font-size="12.8" fill="${color}">${percent}</tspan>${detailText}</text>`;
+        const weekY = y + 24 + Math.max(1, detailLines.length) * 15;
+        const weekText = week ? `<text x="${left}" y="${weekY}" font-size="10.4" fill="${week.color}" font-weight="800">${escapeHtml(week.label)}</text>` : "";
+        return `<text x="22" y="${y}" font-size="12.4" fill="${colors.text}" font-weight="850">${title}</text><rect x="${left}" y="${y - 13}" width="${barW}" height="18" rx="7" fill="#e7edf2"/><rect x="${left}" y="${y - 13}" width="${fillW}" height="18" rx="7" fill="${color}"/><text x="${left}" y="${y + 24}" font-weight="800"><tspan font-size="12.8" fill="${color}">${percent}</tspan>${detailText}</text>${weekText}`;
       }).join("");
     }
 
