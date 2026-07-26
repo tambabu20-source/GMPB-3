@@ -398,6 +398,38 @@
     .phase:nth-child(3) { border-left-color: var(--ok); }
     .phase:nth-child(4) { border-left-color: var(--accent-3); }
 
+    .phase.current-phase {
+      border-left-color: #f59e0b;
+      border-color: rgba(245, 158, 11, 0.55);
+      background: linear-gradient(180deg, #fff7ed 0%, #ffffff 82%);
+      box-shadow: 0 16px 32px rgba(245, 158, 11, 0.18);
+      position: relative;
+    }
+
+    .phase.current-phase strong {
+      color: #9a3412;
+    }
+
+    .phase.current-phase .date-chip {
+      background: #ffedd5;
+      color: #c2410c;
+      border: 1px solid #fdba74;
+    }
+
+    .current-badge {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      margin-bottom: 8px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: #f97316;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
     .phase strong {
       display: block;
       font-size: 15px;
@@ -990,7 +1022,7 @@
           <h2>Tổng Quan</h2>
           <p class="hint">Tổ trưởng: đồng chí Đỗ Hữu Huy · Tổ phó: đồng chí Hồ Thị Nguyên Thảo · Cơ quan thường trực: Sở Nông nghiệp và Môi trường.</p>
         </div>
-        <span class="chip">Cập nhật số liệu: 25/7/2026</span>
+        <span class="chip">Cập nhật số liệu: 24/7/2026</span>
       </div>
       <div class="grid kpis">
         <article class="card card-pad kpi">
@@ -1101,7 +1133,7 @@
       <div class="overall-summary">
         <article class="card card-pad summary-lead">
           <strong>Tóm tắt tiến độ chung</strong>
-          <p class="hint">Cập nhật ngày 25/7/2026, Tổ công tác số 3 đang theo dõi 9 dự án; 8 dự án có tỷ lệ GPMB trong phụ lục mới, CT.02 chưa có diện tích thực địa để tính tỷ lệ và được ghi nhận đề xuất bỏ ra Danh mục theo dõi.</p>
+          <p class="hint">Cập nhật ngày 24/7/2026, Tổ công tác số 3 đang theo dõi 9 dự án; 8 dự án có tỷ lệ GPMB trong phụ lục mới, CT.02 chưa có diện tích thực địa để tính tỷ lệ và được ghi nhận đề xuất bỏ ra Danh mục theo dõi.</p>
           <p class="hint">Nhóm có kết quả GPMB tốt gồm tuyến Cảng Bãi Gốc kết nối QL1 đi Khu kinh tế Vân Phong đạt 99,39%, tuyến ven biển phía Bắc cầu An Hải đạt 95,45%, tuyến ven biển Tuy An - Tuy Hòa giữ mốc đã công khai 92,64%. Một số dự án đã cải thiện rõ so với kỳ trước như Khu công viên trung tâm đạt 89,18%, Hạ tầng kỹ thuật khu dân cư phía Nam đạt 77,00%, Khu công nghiệp Hòa Tâm tăng lên 15,62% nhưng vẫn còn khối lượng lớn.</p>
           <p class="hint">Khó khăn nổi bật vẫn tập trung ở việc hộ dân chưa thống nhất giá đất, mật độ cây trồng và chính sách bồi thường/hỗ trợ; một số hồ sơ còn phải kiểm kê, họp xét tái định cư, phê duyệt phương án, xác định nghĩa vụ tài chính, tiếp nhận hạ tầng cấp thoát nước khu tái định cư, tháo dỡ nhà cửa sau khi nhận tiền và hoàn thiện hồ sơ cưỡng chế/bảo vệ thi công.</p>
           <p class="hint">Thời gian tới tập trung các mốc 25/7, 26/7, 27/7, 28/7, 29/7, 30/7, 31/7, 05/8, 15/8 và 20/8/2026; tiếp tục đối thoại, vận động, trình thẩm định/phê duyệt phương án, chi trả tiền, xử lý cưỡng chế khi đủ điều kiện và bàn giao mặt bằng sạch theo từng dự án.</p>
@@ -1110,7 +1142,7 @@
           <div class="summary-metrics">
             <div class="mini-metric"><span>Có tỷ lệ %</span><b>8/9</b></div>
             <div class="mini-metric"><span>Đạt từ 90% trở lên</span><b>3</b></div>
-            <div class="mini-metric"><span>Bình quân 8 dự án có %</span><b>34,28%</b></div>
+            <div class="mini-metric"><span>Bình quân 8 dự án có %</span><b>69,18%</b></div>
             <div class="mini-metric"><span>Chưa có tỷ lệ %</span><b>1</b></div>
           </div>
           <div class="chart-title summary-chart-title">
@@ -1231,10 +1263,10 @@
                 "clearedArea": "13,5906/14,67 km",
                 "remainingArea": "1,0794 km",
                 "remainingRate": "7,36%",
-                "issues": "0.0\n14.57\n3.421052632\n23.35",
-                "proposal": "Kiến nghị:\nĐối với tuyến chính: 02 hộ ông Trịnh Ngọc Khánh và hộ ông Nguyễn Thế sự không phối hợp kiểm kê\nQua quá trình xác minh, thu thập thông tin và lấy lời khai của các hộ dân, có 12 trường hợp xây dựng nhà ở trên đất nông nghiệp sau ngày 01/7/2014, không đủ điều kiện được bồi thường, hỗ trợ theo quy định dẫn đến phát sinh tâm lý chưa đồng thuận, kiến nghị, khiếu nại, ảnh hưởng đến quá trình vận động, thuyết phục và tiến độ bàn giao mặt bằng, tiềm ẩn nguy cơ làm chậm tiến độ thực hiện dự án nếu không được tập trung chỉ đạo, giải quyết kịp thời.\nChưa hoàn thành xét tái định cư 139/144 hộ.\n14 thửa/ 11 hộ đất nông nghiệp đã phê duyệt, mời chi trả tiền nhưng không thống nhất về giá và cách tính bằng mật độ cây trồng trên diện tích đất bị thu hồi\nĐã họp xét xong 69/74 trường hợp hộ chính, trong đó có 40/69 trường hợp đủ điều kiện tái định cự, đã niêm yết công khai danh sách đủ và không đủ điều kiện.\nBQL dự án ĐTXD Tuy Hòa chưa bàn giao Khu tái định cư số 1, 2 (hoàn thành khu TĐC-1, TĐC-2).\nĐối với 15 trường hợp đã phê duyệt phương án BTHTTĐC nhưng chưa nhận tiền\n- 62 trường hợp chưa phê duyệt phương án, trong đó: + 06/62 trường hợp đã đồng ý dự thảo phương án (Phụ lục 1). Đề nghị Ban Quản lý dự án đầu tư xây dựng khu vực phía Đông khẩn trương trình thẩm định, phê duyệt vào ngày 23/7/2026. + 12/62 trường hợp mới công khai phương án chiều ngày 15/7/2026 (Phụ lục 2). Ngày 22/7/2026 tiếp tục tổ chức đối thoại. + 44/62 trường hợp đã tổ chức đối thoại, tuyên truyền, vận động nhiều lần nhưng đến nay vẫn chưa thống nhất với phương án bồi thường (Phụ lục 3). Đề nghị Ban Quản lý dự án đầu tư xây dựng khu vực phía Đông khẩn trương hoàn thiện phương án, trình thẩm định, phê duyệt, chậm nhất ngày 23/7/2026.\n- Các hộ dân chưa nhận tiền hoặc chưa thống nhất với phương án bồi thường, hỗ trợ, tái định cư mặc dù đã được tổ chức nhiều đợt đối thoại, tuyên truyền, vận động, chủ yếu do các nguyên nhân sau: + Không thống nhất việc bồi thường 0 đồng đối với nhà ở, công trình xây dựng trái phép trên đất nông nghiệp được tạo lập sau ngày 01/7/2014. + Cho rằng chính sách bồi thường, hỗ trợ còn thấp; số tiền bồi thường về đất không đủ để thực hiện nghĩa vụ tài chính khi được giao đất tái định cư và xây dựng nhà ở tại khu tái định cư. + Việc áp dụng quy định về suất tái định cư tối thiểu còn phát sinh vướng mắc. Theo điểm a khoản 1 Điều 17 Quyết định số 26/2026/QĐ-UBND, suất tái định cư tối thiểu bằng đất ở được xác định theo diện tích tối thiểu được phép tách thửa; điểm b khoản 1 Điều 14 Quyết định số 37/2026/QĐ-UBND quy định diện tích tối thiểu được phép tách thửa đối với đất ở khu vực đô thị là 40 m². Thực tế, có nhiều trường hợp có giá trị bồi thường về đất cao hơn so với giá trị một suất tái định cư tối thiểu nhưng ít hơn số tiền phải nộp tái định cư. Mặc dù Phòng Kinh tế, Hạ tầng và Đô thị đã hướng dẫn người dân thực hiện ghi nợ tiền sử dụng đất theo khoản 1 Điều 26 Nghị định số 88/2024/NĐ-CP, các hộ dân vẫn chưa đồng thuận. Đề nghị UBND tỉnh xem xét cho cơ chế diện tích tách thửa đối với công tác bồi thường, hỗ trợ và tái định cư để thuận lợi cho người dân khi có đất ở bị thu hồi. - Mặc dù UBND phường đã phối hợp chặt chẽ với Ban Quản lý dự án đầu tư xây dựng khu vực phía Đông triển khai quyết liệt Chiến dịch 45 ngày đêm nhưng nhiều hộ dân chưa thống nhất với phương án bồi thường, hỗ trợ, tái định cư nên phải tiếp đối thoại, vận động và thực hiện trình tự thu hồi đất, cưỡng chế thu hồi đất theo quy định tại Điều 87 Luật Đất đai năm 2024. Do đó, ảnh hưởng đến tiến độ thực hiện một số nội dung theo Thông báo kết luận số 319/TB-STNMT ngày 21/7/2026 của Tổ công tác số 03 sau buổi kiểm tra thực địa các dự án ngày 18/7/2026.\n\nKế hoạch thực hiện/Tiến độ thực hiện:\nĐối với các vướng mắc liên quan đến việc người dân chưa đồng ý nhận tiền theo phương án bồi thường đã được phê duyệt và bàn giao mặt bằng. Đề nghị UBND xã Ô Loan chủ trì, phối hợp với Ban C và các đơn vị có liên quan khác tiếp tục vận động các hộ dân thống nhất nhận tiền và bàn giao mặt bằng; cần thiết thì bảo vệ thi công đúng quy định. Thời gian hoàn thành trước 15/8/2026. UBND xã đã cung cấp hồ sơ cho Công an xã để hoàn thiện thẩm định hồ sơ cưỡng chế.\nĐã gửi danh sách các trường hợp còn lại cho VPĐKĐĐ tỉnh - Chi nhánh Khu vực Tuy An tại Công văn số 2447/UBND-KT ngày 07/7/2026\nĐề nghị Ban Quản lý dự án đầu tư xây dựng Tuy Hòa hoàn thành việc bàn giao khu tái định cư số 1, 2 cho Ban Quản lý các dự án Đầu tư xây dựng khu vực phía Đông tỉnh Đắk Lắk (Ban C) trong tháng 7/2026. Đề nghị Sở Nông nghiệp và Môi trường tham mưu UBND tỉnh chỉ đạo giải quyết vướng mắc trong việc tiếp nhận hệ thống cấp, thoát nước tại các khu tái định cư số 1 và số 2 để sớm hoàn thiện hạ tầng kỹ thuật, bảo đảm điều kiện giao đất tái định cư cho các hộ dân.\nBan Quản lý dự án đầu tư xây dựng khu vực phía Đông khẩn trương hoàn thiện hồ sơ trình thẩm định, phê duyệt phương án bồi thường, hỗ trợ, tái định cư đối với các trường hợp còn lại; hoàn thiện phương án bồi thường, hỗ trợ đối với Miếu làng Xuân Dục; phối hợp kiểm kê, xử lý mồ mả vô chủ và thực hiện di dời phần diện tích đất công ích.\nĐề nghị UBND tỉnh xem xét cho cơ chế diện tích tách thửa đối với công tác bồi thường, hỗ trợ và tái định cư để thuận lợi cho người dân khi có đất ở bị thu hồi.",
-                "deadline": "17/7/2026; 25/7/2026; 31/7/2026; 20/7/2026",
-                "note": "Địa bàn/tiến độ: 14.67 km: đã bàn giao xã Tuy An Đông; 0.2/0.2km%; chưa bàn giao 100.0; còn 0.0% | : đã bàn giao xã Tuy An Nam; 3.93/4.6 Km%; chưa bàn giao 85.43; còn 0.67% | : đã bàn giao xã Ô Loan; 7.34/7.6 Km%; chưa bàn giao 97.58; còn 0.26% | : đã bàn giao phường Bình Kiến; 1.774%; chưa bàn giao 76.62; còn 0.53%\nThời gian xử lý xong vướng mắc: 18/7/2026\n25/7/2026\n25/7/2026\n19/7/2026\nĐẩy nhanh tiến độ hoàn thiện hạ tầng các khu tái định cư số 1 và số 2, tạo điều kiện để các hộ dân nhận đất, xây dựng nhà ở và ổn định cuộc sống.\nTiếp tục phối hợp Ban Quản lý dự án đầu tư xây dựng khu vực phía Đông và Tổ vận động của Ban Chỉ đạo giải phóng mặt bằng phường tổ chức đối thoại, tuyên truyền, vận động các trường hợp chưa nhận tiền, chưa thống nhất với phương án bồi thường, hỗ trợ, tái định cư; thực hiện quy trình cưỡng chế thu hồi đất theo quy định.\n- Tiếp tục phối hợp Ban Quản lý dự án đầu tư xây dựng khu vực phía Đông và Tổ vận động của Ban Chỉ đạo giải phóng mặt bằng phường tổ chức đối thoại, tuyên truyền, vận động các trường hợp chưa nhận tiền, chưa thống nhất với phương án bồi thường, hỗ trợ, tái định cư; thực hiện quy trình cưỡng chế thu hồi đất theo quy định.\nNguồn cập nhật: file Excel theo dõi tiến độ Tổ công tác số 03 trên Google Drive, cập nhật ngày 25/7/2026.\nCảnh báo tự động: nguồn cập nhật ghi tỷ lệ 0.20% thấp hơn mốc đã công khai 92.64%; tạm giữ mốc đã công khai để rà soát, tránh lùi tiến độ.",
+                "issues": "xã Tuy An Nam còn vướng 02 hộ không phối hợp kiểm kê; còn 03 trường hợp tiếp tục xem xét điều kiện tái định cư. xã Ô Loan còn 14 thửa/11 hộ đất nông nghiệp chưa thống nhất giá và mật độ cây trồng; đã cung cấp hồ sơ cưỡng chế cho Công an xã, một số hộ chưa thống nhất sau đối thoại. phường Bình Kiến còn 08 trường hợp đã phê duyệt chưa đồng ý nhận tiền, bàn giao mặt bằng; 79 trường hợp chưa phê duyệt phương án BTHTTĐC, trong đó có nhóm mới trình thông báo thu hồi đất thay thế và nhóm đã công khai phương án. BQL dự án ĐTXD Tuy Hòa chưa hoàn tất bàn giao khu tái định cư số 1, 2; một số nội dung liên quan cấp, thoát nước, chính sách bồi thường, hỗ trợ, suất tái định cư tối thiểu còn phát sinh vướng mắc.",
+                "proposal": "Kiến nghị:\nBan C, UBND các xã/phường và các đơn vị liên quan hoàn thiện kiểm kê, phương án BTHTTĐC, đối thoại, vận động; trường hợp cần thiết thực hiện quy trình cưỡng chế/bảo vệ thi công theo quy định. Đề nghị hoàn thành xem xét điều kiện tái định cư, thẩm định, phê duyệt, chi trả và bàn giao mặt bằng theo các mốc 25/7, 27/7, 28/7, 29/7, 30/7 và trước 15/8/2026.\n\nKế hoạch thực hiện/Tiến độ thực hiện:\nTập trung hoàn thiện hạ tầng khu tái định cư số 1, 2; xử lý nhóm hộ chưa nhận tiền, chưa thống nhất phương án; phê duyệt các phương án còn lại; tiếp tục đối thoại, vận động, chi trả và bàn giao mặt bằng trước 15/8/2026.",
+                "deadline": "15/8/2026; 25/7/2026; 27/7/2026; 29/7/2026; 30/7/2026",
+                "note": "Địa bàn/tiến độ: xã Tuy An Đông: đã bàn giao 0,2/0,2 km; 100%; chưa bàn giao 0; còn 0% | xã Tuy An Nam: đã bàn giao 3,93/4,6 km; 85,43%; chưa bàn giao 0,67; còn 14,57% | xã Ô Loan: đã bàn giao 7,34/7,6 km; 97,58%; chưa bàn giao 0,26; còn 3,42% | phường Bình Kiến: đã bàn giao 1,9436/2,27 km; 85,62%; chưa bàn giao 0,3264; còn 14,38%\nThời gian xử lý xong vướng mắc: xã Tuy An Nam: 25/7/2026; 28/7/2026; 15/8/2026 | xã Ô Loan: 25/7/2026; 27/7/2026; 29/7/2026; 30/7/2026; 15/8/2026 | phường Bình Kiến: 27/7/2026; 15/8/2026\nNguồn cập nhật: file “11h30 25.7.2026 TO CONG TAC SO 03 - Theo doi Tien do giai quyet chi tiet tung du an (3)” - Phụ lục tiến độ kèm Thông báo kết luận số 326/TB-UBND ngày 17/7/2026 của UBND tỉnh; đối chiếu Báo cáo số 583/BC-SNNMT ngày 22/7/2026 để rà soát bối cảnh vướng mắc.\nCảnh báo tự động: nguồn cập nhật ghi tỷ lệ 91.44% thấp hơn mốc đã công khai 92.64%; tạm giữ mốc đã công khai để rà soát, tránh lùi tiến độ.",
                 "subitems": [],
                 "progress": 92.64
           },
@@ -1247,13 +1279,13 @@
                 "totalArea": "7,48 km",
                 "clearedArea": "7,14/7,48 km",
                 "remainingArea": "0,34 km",
-                "remainingRate": "93,31%",
-                "issues": "4.55",
-                "proposal": "Kiến nghị:\nHệ thống cấp thoát nước khu Tái định cư chưa có đơn vị tiếp nhận quản lý, khó khăn cho việc vận hành, sử dụng\n\nKế hoạch thực hiện/Tiến độ thực hiện:\nBan Quản lý các dự án Đầu tư xây dựng khu vực phía Đông tỉnh Đắk Lắk (Ban C) liên hệ, bàn giao hệ thống cấp thoát nước của khu tái định cư dự án cho Công ty Cổ phần Cấp thoát nước Phú Yên quản lý, khai thác trước ngày 19/7/2026.",
-                "deadline": "15/8/2026",
-                "note": "Địa bàn/tiến độ: 7.48 km: đã bàn giao xã Tuy An Đông; 6.69%; chưa bàn giao 89.44; còn 0.34%\nThời gian xử lý xong vướng mắc: 19/7/2026\nNguồn cập nhật: file Excel theo dõi tiến độ Tổ công tác số 03 trên Google Drive, cập nhật ngày 25/7/2026.",
+                "remainingRate": "4,55%",
+                "issues": "Hệ thống cấp thoát nước khu tái định cư chưa có đơn vị tiếp nhận quản lý, khó khăn cho việc vận hành, sử dụng; Ban C đã làm việc với Công ty Cổ phần Cấp thoát nước Phú Yên nhưng chưa thống nhất tiếp nhận.",
+                "proposal": "Kiến nghị:\nHệ thống cấp thoát nước khu Tái định cư chưa có đơn vị tiếp nhận quản lý, khó khăn cho việc vận hành, sử dụng\n\nKế hoạch thực hiện/Tiến độ thực hiện:\nBan Quản lý các dự án Đầu tư xây dựng khu vực phía Đông tỉnh Đắk Lắk (Ban C) liên hệ, bàn giao hệ thống cấp thoát nước của khu tái định cư dự án cho Công ty Cổ phần Cấp thoát nước Phú Yên quản lý, khai thác trước ngày 24/7/2026.",
+                "deadline": "20/8/2026",
+                "note": "Địa bàn/tiến độ: xã Tuy An Đông: đã bàn giao 7,14/7,48 km; 95,45%; chưa bàn giao 0,34; còn 4,55%\nThời gian xử lý xong vướng mắc: 15/8/2026; bàn giao mặt bằng 20/8/2026\nNguồn cập nhật: file “11h30 25.7.2026 TO CONG TAC SO 03 - Theo doi Tien do giai quyet chi tiet tung du an (3)” - Phụ lục tiến độ kèm Thông báo kết luận số 326/TB-UBND ngày 17/7/2026 của UBND tỉnh; đối chiếu Báo cáo số 583/BC-SNNMT ngày 22/7/2026 để rà soát bối cảnh vướng mắc.",
                 "subitems": [],
-                "progress": 6.69
+                "progress": 95.45
           },
           {
                 "order": 3,
@@ -1265,10 +1297,10 @@
                 "clearedArea": "0/3,4 km",
                 "remainingArea": "3,4 km",
                 "remainingRate": "100%",
-                "issues": "100.0",
+                "issues": "Dự án mới triển khai, tư vấn đã hoàn thành công tác đo đạc; các khu tái định cư thôn Tiên Châu và thôn Xuân Phu đã hoàn thiện kết quả đo đạc hiện trạng, đang quy chủ sử dụng đất và tổ chức kiểm kê.",
                 "proposal": "Kiến nghị:\nDự án mới triển khai, chưa đến giai đoạn thực hiện công tác GPMB nên chưa có vướng mắc, do đó, đề nghị UBND xã Tuy An Đông phối hợp với các đơn vị có liên quan tiến hành các bước thực hiện dự án theo quy định, đảm bảo tiến độ dự án.\nHiện nay Tư vấn đang đo đạc chỉnh lý bản đồ, phối hợp với các hộ dân đo chỉnh lý các thửa không đúng, chưa bàn giao hồ sơ, mốc giới thực địa nên chưa có cơ sở kiểm đếm, áp giá.\nĐã hoàn thiện kết quả đo đạc hiện trạng và đang quy chủ sử dụng đất, tổ chức kiểm kê\nĐã hoàn thiện kết quả đo đạc hiện trạng và đang quy chủ sử dụng đất, tổ chức kiểm kê\n\nKế hoạch thực hiện/Tiến độ thực hiện:\nTuy An Đông đôn đốc tư vấn khẩn trương hoàn thành công tác đo đạc chậm nhất trong tháng 7/2026\nĐề nghị Ban C chủ động làm việc với Đơn vị tư vấn đo đạc về tiến độ hoàn thành công tác đo đạc, chỉnh lý bản đồ khu đất dự án. Đồng thời, phối hợp với UBND xã Tuy An Đông hoàn thành việc ký xác nhận phiếu đo đạc thửa đất. Thời gian hoàn thành trước 20/7/2026.\nĐề nghị Ban C chủ động làm việc với Đơn vị tư vấn đo đạc tổ chức kiểm kê. Thời gian hoàn thành trước 30/7/2026.\nĐề nghị Ban C chủ động làm việc với Đơn vị tư vấn đo đạc tổ chức kiểm kê. Thời gian hoàn thành trước 30/7/2026.",
-                "deadline": "17/7/2026; 20/7/2026; 30/7/2026",
-                "note": "Địa bàn/tiến độ: 3.4km (21.1443ha): đã bàn giao xã Tuy An Đông; 0.0%; chưa bàn giao 0.0; còn 3.4% | 44.460,2 m2. 52 thửa(10 hộ gia đình, cá nhân, 02 tổ chức và 01 đất UBND xã): đã bàn giao Tuy An Đông; %; chưa bàn giao ; còn % | 49.990,4 m2. 91 thửa (78 hộ gia đình, cá nhân và đất UBND xã): đã bàn giao Tuy An Đông; %; chưa bàn giao ; còn %\nThời gian xử lý xong vướng mắc: 17/7/2026\n20/7/2026\n30/7/2026\n30/7/2026\nNguồn cập nhật: file Excel theo dõi tiến độ Tổ công tác số 03 trên Google Drive, cập nhật ngày 25/7/2026.",
+                "deadline": "20/8/2026; 30/7/2026; 15/8/2026",
+                "note": "Địa bàn/tiến độ: xã Tuy An Đông: đã bàn giao 0/3,4 km; 0%; chưa bàn giao 3,4; còn 100%\nThời gian xử lý xong vướng mắc: 17/7/2026; 20/7/2026; 30/7/2026; 15/8/2026; 20/8/2026\nNguồn cập nhật: file “11h30 25.7.2026 TO CONG TAC SO 03 - Theo doi Tien do giai quyet chi tiet tung du an (3)” - Phụ lục tiến độ kèm Thông báo kết luận số 326/TB-UBND ngày 17/7/2026 của UBND tỉnh; đối chiếu Báo cáo số 583/BC-SNNMT ngày 22/7/2026 để rà soát bối cảnh vướng mắc.",
                 "subitems": [],
                 "progress": 0
           },
@@ -1281,13 +1313,13 @@
                 "totalArea": "14,59 ha",
                 "clearedArea": "13,1/14,59 ha",
                 "remainingArea": "1,49 ha",
-                "remainingRate": "89,06%",
-                "issues": "25.0",
+                "remainingRate": "10,82%",
+                "issues": "24 hộ đã phê duyệt phương án chưa đồng ý nhận tiền, chưa đồng ý giao mặt bằng; 17 hộ chưa phê duyệt phương án bồi thường. Đến nay còn 41 hộ, giảm 11 hộ so với thời điểm 07/7/2026.",
                 "proposal": "Kiến nghị:\nĐối với 24 hộ đã phê duyệt phương án, chưa đồng ý nhận tiền, chưa đồng ý giao mặt bằng\nĐối với 17 hộ chưa phê duyệt phương án bồi thường: Đã tổ chức bốc thăm và đã niêm yết công khai phương án bồi thường.\n\nKế hoạch thực hiện/Tiến độ thực hiện:\nĐề nghị UBND phường Phú Yên phối hợp chủ đầu tư và BQL dự án ĐTXD Tuy Hoà ban hành Quyết định cưỡng chế thu hồi đất đối với 10 đối tượng, tiếp tục tổ chức vận động hộ dân bàn giao mặt bằng, nếu không đồng ý tiến hành cưỡng chế trước ngày 05/8/2026; đối với 14 hộ dân còn lại tiếp tục vận động nhận tiền, bàn giao mặt bằng nếu họ dân không đồng ý tiến hành cưỡng chế trước ngày 10/8/2026.\nĐề nghị UBND phường Phú Yên phối hợp chủ đầu tư và BQL dự án ĐTXD Tuy Hoà khẩn trương phê duyệt phương án bồi thường 17 hộ dân còn lại, tiến hành chi trả tiền và bàn giao toàn bộ mặt bằng; nếu không đồng ý tiến hành cưỡng chế trước ngày 10/8/2026.",
-                "deadline": "31/7/2026",
-                "note": "Địa bàn/tiến độ: 14.59 ha: đã bàn giao phường Phú Yên; 10.94%; chưa bàn giao 74.98; còn 3.65%\nThời gian xử lý xong vướng mắc: 7/20/2026\n7/20/2026\nNguồn cập nhật: file Excel theo dõi tiến độ Tổ công tác số 03 trên Google Drive, cập nhật ngày 25/7/2026.",
+                "deadline": "31/7/2026; 15/8/2026",
+                "note": "Địa bàn/tiến độ: phường Phú Yên: đã bàn giao 13,1/14,59 ha; 89,18%; chưa bàn giao 1,49; còn 10,82%\nThời gian xử lý xong vướng mắc: 31/7/2026; 15/8/2026\nNguồn cập nhật: file “11h30 25.7.2026 TO CONG TAC SO 03 - Theo doi Tien do giai quyet chi tiet tung du an (3)” - Phụ lục tiến độ kèm Thông báo kết luận số 326/TB-UBND ngày 17/7/2026 của UBND tỉnh; đối chiếu Báo cáo số 583/BC-SNNMT ngày 22/7/2026 để rà soát bối cảnh vướng mắc.",
                 "subitems": [],
-                "progress": 10.94
+                "progress": 89.18
           },
           {
                 "order": 5,
@@ -1298,13 +1330,13 @@
                 "totalArea": "23,79 ha",
                 "clearedArea": "18,32/23,79 ha",
                 "remainingArea": "5,47 ha",
-                "remainingRate": "83,94%",
-                "issues": "32.49",
+                "remainingRate": "23,00%",
+                "issues": "16 đối tượng đã phê duyệt phương án chưa đồng ý nhận tiền; 06 hộ chưa phê duyệt phương án bồi thường. Đã vận động, đối thoại được 20 hộ bàn giao mặt bằng; hiện còn 22 hộ, giảm 20 hộ so với thời điểm 07/7/2026.",
                 "proposal": "Kiến nghị:\n16 đối tượng đã phê duyệt phương án: 14 đối tượng đã ban hành quyết định cưỡng chết thu hồi đất, dự kiến tổ chức cưỡng chế trước ngày 21/7/2026; 02 đối tượng đang tiếp tục tổ chức vận động nhận tiền, bàn giao mặt bằng.\n06 hộ chưa phê duyệt phương án bồi thường: 02 đối tượng đã trình thẩm định, phê duyệt phương án bồi thường và 04 đối tượng chưa trình phê duyệt phương án bồi thường (đã tổ chức bốc thăm và đã niêm yết công khai phương án bồi thường)\n\nKế hoạch thực hiện/Tiến độ thực hiện:\nĐề nghị UBND phường Phú Yên phối hợp chủ đầu tư và BQL dự án ĐTXD Tuy Hoà tiếp tục tổ chức vận động 14 hộ dân bàn giao mặt bằng, nếu không đồng ý tiến hành cưỡng chế trước ngày 05/8/2026; đối với 02 hộ dân còn lại tiếp tục vận động nhận tiền, bàn giao mặt bằng nếu hộ dân không đồng ý tiến hành cưỡng chế trước ngày 10/8/2026.\nĐề nghị UBND phường Phú Yên phối hợp chủ đầu tư và BQL dự án ĐTXD Tuy Hoà khẩn trương phê duyệt phương án bồi thường 06 hộ dân còn lại, tiến hành chi trả tiền và bàn giao toàn bộ mặt bằng trước 30/7/2026; nếu hộ dân không đồng ý tiến hành cưỡng chế trước ngày 15/8/2026.",
-                "deadline": "15/8/2026; 31/7/2026",
-                "note": "Địa bàn/tiến độ: 23.79 ha: đã bàn giao phường Phú Yên; 16.06%; chưa bàn giao 67.51; còn 7.73%\nThời gian xử lý xong vướng mắc: 15/8/2026\n7/20/2026\nNguồn cập nhật: file Excel theo dõi tiến độ Tổ công tác số 03 trên Google Drive, cập nhật ngày 25/7/2026.",
+                "deadline": "31/7/2026; 5/8/2026; 15/8/2026",
+                "note": "Địa bàn/tiến độ: phường Phú Yên: đã bàn giao 18,32/23,79 ha; 77,00%; chưa bàn giao 5,47; còn 23,00%\nThời gian xử lý xong vướng mắc: 31/7/2026; 5/8/2026; 15/8/2026\nNguồn cập nhật: file “11h30 25.7.2026 TO CONG TAC SO 03 - Theo doi Tien do giai quyet chi tiet tung du an (3)” - Phụ lục tiến độ kèm Thông báo kết luận số 326/TB-UBND ngày 17/7/2026 của UBND tỉnh; đối chiếu Báo cáo số 583/BC-SNNMT ngày 22/7/2026 để rà soát bối cảnh vướng mắc.",
                 "subitems": [],
-                "progress": 16.06
+                "progress": 77.0
           },
           {
                 "order": 6,
@@ -1316,10 +1348,10 @@
                 "clearedArea": "40,98/262,25 ha",
                 "remainingArea": "221,27 ha",
                 "remainingRate": "77,39%",
-                "issues": "91.38",
+                "issues": "Nguồn gốc sử dụng đất của nhiều hộ dân phức tạp, hồ sơ pháp lý chưa đầy đủ; giá đất, giá bồi thường và chính sách hỗ trợ còn khác biệt so với kỳ vọng của một bộ phận người dân; còn thiếu thông tin người sử dụng đất do một số địa phương chưa cung cấp kịp thời.",
                 "proposal": "Kiến nghị:\n- Nguồn gốc sử dụng đất của nhiều hộ dân phức tạp, hồ sơ pháp lý chưa đầy đủ nên việc xác minh, hoàn thiện hồ sơ mất nhiều thời gian. - Giá đất, giá bồi thường và các chính sách hỗ trợ còn có sự khác biệt so với kỳ vọng của một bộ phận người dân, dẫn đến hộ dân không đồng ý nhận tiền.\n- Các phường Hòa Hiệp, Tuy Hòa, Khánh Hoà, Thành phố Hồ Chí Minh chưa cung cấp thông tin liên quan người sử dụng đất là hộ trực tiếp sản xuất nông nghiệp kịp thời để lập dự thảo phương án\n- Chưa có khu cải táng để di dời mồ mả trong phạm vi dự án.\n\nKế hoạch thực hiện/Tiến độ thực hiện:\n1. Chỉ đạo Ban Quản lý dự án Đầu tư xây dựng Tuy Hòa tập trung nhân lực, khẩn trương lập, hoàn thiện phương án bồi thường, hỗ trợ và tái định cư ngay sau khi nhận đầy đủ hồ sơ do UBND xã chuyển; hạn chế tình trạng hồ sơ tồn đọng, kéo dài thời gian trình thẩm định. 2. Chỉ đạo Chủ đầu tư và các đơn vị tư vấn đo đạc đẩy nhanh tiến độ trích đo, chỉnh lý bản đồ địa chính, kịp thời cung cấp hồ sơ kỹ thuật đối với các trường hợp phát sinh để UBND xã có cơ sở tổ chức họp xét nguồn gốc và hoàn thiện hồ sơ. Chủ đầu tư sớm triển khai các hạng mục dự án (tại các khu vực đã giao mặt bằng sạch) để tạo sự đồng thuận trong nhân dân, góp phần đẩy nhanh tiến độ công tác giải phóng mặt bằng dự án.\nUBND tỉnh chỉ đạo UBND phường Hoà Hiệp, phường Tuy Hoà cung cấp thông tin trước ngày 26/7/2026",
-                "deadline": "20/8/2026; 26/7/2026",
-                "note": "Địa bàn/tiến độ: 262.25 ha: đã bàn giao xã Hòa Xuân; 22.61%; chưa bàn giao 8.62; còn 239.64%\nThời gian xử lý xong vướng mắc: 30/7/2026\nNguồn cập nhật: file Excel theo dõi tiến độ Tổ công tác số 03 trên Google Drive, cập nhật ngày 25/7/2026.",
+                "deadline": "26/7/2026; 30/7/2026; 20/8/2026",
+                "note": "Địa bàn/tiến độ: 262.25 ha: đã bàn giao xã Hòa Xuân; 22.61%; chưa bàn giao 8.62; còn 239.64%\nThời gian xử lý xong vướng mắc: 30/7/2026\nNguồn cập nhật: file Excel theo dõi tiến độ Tổ công tác số 03 trên Google Drive, cập nhật ngày 25/7/2026.\nCảnh báo tự động: nguồn cập nhật ghi tỷ lệ 15.62% thấp hơn số đã công khai 22.61%; tạm giữ số liệu cũ để rà soát, tránh lùi tiến độ do nhập sai.",
                 "subitems": [],
                 "progress": 22.61
           },
@@ -1332,13 +1364,13 @@
                 "totalArea": "41,32 ha (7,40km/7,72km)",
                 "clearedArea": "41,07/41,32 ha",
                 "remainingArea": "0,25 ha",
-                "remainingRate": "58,89%",
-                "issues": "0.51",
+                "remainingRate": "0,61%",
+                "issues": "Còn 03 hộ chưa đồng ý nhận tiền, bàn giao mặt bằng; đã vận động được 04 hộ đồng ý nhận tiền, bàn giao mặt bằng.",
                 "proposal": "Kiến nghị:\n03 hộ dân còn lại chưa đồng ý nhận tiền, chưa đồng ý bàn giao mặt bằng.\n\nKế hoạch thực hiện/Tiến độ thực hiện:\n",
-                "deadline": "30/7/2026",
-                "note": "Địa bàn/tiến độ: 41.32 ha (7,40km/7,72km): đã bàn giao xã Hòa Xuân; 41.11%; chưa bàn giao 99.49; còn 0.21%\nThời gian xử lý xong vướng mắc: 25/7/2026\nNguồn cập nhật: file Excel theo dõi tiến độ Tổ công tác số 03 trên Google Drive, cập nhật ngày 25/7/2026.",
+                "deadline": "30/7/2026; 15/8/2026",
+                "note": "Địa bàn/tiến độ: xã Hòa Xuân: đã bàn giao 41,07/41,32 ha; 99,39%; chưa bàn giao 0,25; còn 0,61%\nThời gian xử lý xong vướng mắc: 30/7/2026; 15/8/2026\nNguồn cập nhật: file “11h30 25.7.2026 TO CONG TAC SO 03 - Theo doi Tien do giai quyet chi tiet tung du an (3)” - Phụ lục tiến độ kèm Thông báo kết luận số 326/TB-UBND ngày 17/7/2026 của UBND tỉnh; đối chiếu Báo cáo số 583/BC-SNNMT ngày 22/7/2026 để rà soát bối cảnh vướng mắc.",
                 "subitems": [],
-                "progress": 41.11
+                "progress": 99.39
           },
           {
                 "order": 8,
@@ -1350,10 +1382,10 @@
                 "clearedArea": "5,55/6,60 ha",
                 "remainingArea": "1,05 ha",
                 "remainingRate": "15,83%",
-                "issues": "16.94",
+                "issues": "Còn 01 thửa đã nhận tiền nhưng chưa tháo dỡ nhà để bàn giao mặt bằng; 10 thửa chưa nhận tiền bồi thường, hỗ trợ; 19/97 thửa chưa phê duyệt phương án; còn vướng điều chỉnh hệ số giá đất đối với đoạn đường khu tái định cư.",
                 "proposal": "Kiến nghị:\nĐối với các thửa đất đã phê duyệt phương án bồi thường, hỗ trợ và tái định cư thì còn 01 thửa đã nhận tiền nhưng chưa tháo dở nhà để bàn giao mặt bằng (hộ ông Nguyễn Thái), 10 thửa chưa nhận tiền bồi thường, hỗ trợ\nĐối với 19/97 thửa chưa phê duyệt phương án, trong đó: 07 thửa đã hoàn thành việc thông qua dự thảo phương án bồi thường, hỗ trợ và tái định cư; 12 thửa còn lại đang lập dự thảo phương án để lấy ý kiến.\n- Giá đất, giá bồi thường và các chính sách hỗ trợ còn có sự khác biệt so với kỳ vọng của một bộ phận người dân, dẫn đến hộ dân không đồng ý nhận tiền.\n\nKế hoạch thực hiện/Tiến độ thực hiện:\nĐề nghị UBND phường Bình Kiến chủ trì, phối hợp các đơn vị liên quan vận động các hộ dân nhận tiền bồi thường, hỗ trợ, tháo dở nhà và bàn giao mặt bằng trước ngày 30/7/2026.\nĐề nghị UBND phường Bình Kiến chủ trì, phối hợp các đơn vị liên quan thực hiện các bước tiếp theo theo quy trình và hoàn thành bàn giao mặt bằng trước ngày 15/8/2026.\nUBND tỉnh xem xét điều chỉnh hệ số giá đất đối với đoạn đường khu tái định cư thuộc Dự án Nhà ở xã hội An Phú",
-                "deadline": "30/7/2026; 26/7/2026",
-                "note": "Địa bàn/tiến độ: 6.68162 ha: đã bàn giao phường Bình Kiến; 5.55%; chưa bàn giao 82.32; còn 1.13162%\nThời gian xử lý xong vướng mắc: - Thẩm định, phê duyệt phương án bồi thường: Hoàn thành phê duyệt phương án BQLDA ĐTXD Tuy Hòa trình đợt 20, 22 và các đợt tiếp theo do BQL DA ĐTXD Tuy Hòa trình.\n26/7/2026\n7/20/2026\nNguồn cập nhật: file Excel theo dõi tiến độ Tổ công tác số 03 trên Google Drive, cập nhật ngày 25/7/2026.\nCảnh báo tự động: nguồn cập nhật ghi tỷ lệ 5.55% thấp hơn mốc đã công khai 84.17%; tạm giữ mốc đã công khai để rà soát, tránh lùi tiến độ.",
+                "deadline": "26/7/2026; 28/7/2026; 30/7/2026; 15/8/2026",
+                "note": "Địa bàn/tiến độ: phường Bình Kiến: đã bàn giao 5,55/6,68162 ha; 82,32%; chưa bàn giao 1,13162; còn 16,94%\nThời gian xử lý xong vướng mắc: 26/7/2026; 28/7/2026; 30/7/2026; 15/8/2026\nNguồn cập nhật: file “11h30 25.7.2026 TO CONG TAC SO 03 - Theo doi Tien do giai quyet chi tiet tung du an (3)” - Phụ lục tiến độ kèm Thông báo kết luận số 326/TB-UBND ngày 17/7/2026 của UBND tỉnh; đối chiếu Báo cáo số 583/BC-SNNMT ngày 22/7/2026 để rà soát bối cảnh vướng mắc.\nCảnh báo tự động: nguồn cập nhật ghi tỷ lệ 82.32% thấp hơn mốc đã công khai 84.17%; tạm giữ mốc đã công khai để rà soát, tránh lùi tiến độ.",
                 "subitems": [],
                 "progress": 84.17
           },
@@ -1367,7 +1399,7 @@
                 "clearedArea": "",
                 "remainingArea": "",
                 "remainingRate": "",
-                "issues": "0.0",
+                "issues": "Chưa có số liệu diện tích thực địa để tính tỷ lệ GPMB.",
                 "proposal": "Kiến nghị:\nĐề xuất bỏ ra Danh mục theo dõi.\n\nKế hoạch thực hiện/Tiến độ thực hiện:\nĐang ở bước khảo sát, đề xuất tuyến, chưa có chủ trương đầu tư; đề xuất bỏ ra Danh mục theo dõi do Tổ công tác số 03 phụ trách theo dõi, đôn đốc GPMB các dự án đầu tư trên địa bàn tỉnh.",
                 "deadline": "",
                 "note": "Đề xuất bỏ ra Danh mục theo dõi.\nNguồn cập nhật: file “11h30 25.7.2026 TO CONG TAC SO 03 - Theo doi Tien do giai quyet chi tiet tung du an (3)” - Phụ lục tiến độ kèm Thông báo kết luận số 326/TB-UBND ngày 17/7/2026 của UBND tỉnh; đối chiếu Báo cáo số 583/BC-SNNMT ngày 22/7/2026 để rà soát bối cảnh vướng mắc.",
@@ -1376,7 +1408,7 @@
           }
     ];
 
-    const dataUpdatedDate = "25/7/2026";
+    const dataUpdatedDate = "24/7/2026";
 
     const colors = {
       public: "#0b6b72",
@@ -1765,7 +1797,7 @@
           const locality = match[1].replace(/^Địa bàn\/tiến độ:\s*/i, "").trim();
           const sourceProgress = parseFloat(String(match[3]).replace(",", "."));
           const calculatedProgress = calculateLocalityProgress(match[2]);
-          const progress = Number.isFinite(calculatedProgress) ? calculatedProgress : sourceProgress;
+          const progress = Number.isFinite(sourceProgress) ? sourceProgress : calculatedProgress;
           if (!locality || !Number.isFinite(progress)) continue;
           rows.push({
             locality,
