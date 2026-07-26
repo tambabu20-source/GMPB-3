@@ -15,6 +15,7 @@ on:
       - "patch_progress_safety.py"
       - "patch_locality_chart.py"
       - "patch_project1_units.py"
+      - "patch_latest_20260724_progress.py"
       - "patch_locality_mobile_css.py"
       - "patch_locality_ratio_calc.py"
       - "patch_locality_percent_style.py"
@@ -61,6 +62,9 @@ jobs:
 
       - name: Chuẩn hóa đơn vị mét dự án 1
         run: python patch_project1_units.py --index index.html
+
+      - name: Chuẩn hóa tiến độ theo phụ lục 24/7/2026
+        run: python patch_latest_20260724_progress.py --index index.html
 
       - name: Commit nếu có số liệu mới
         run: |
