@@ -95,34 +95,33 @@ HELPERS = '''    function formatPct(value, digits = 2) {
 '''
 
 
-def add_after_object(html: str, object_name: str, block: str) -> str:
-    if object_name == "weeklyProjectProgress" and "weeklyProjectCleared" in html:
-        return html
-    if object_name == "weeklyLocalityProgress" and "weeklyLocalityCleared" in html:
+def add_after_object(html: str, object_name: str, marker: str, block: str) -> str:
+    if marker in html:
         return html
     pattern = rf'(    const {object_name} = \{{[\s\S]*?\n    \}};\n)'
-    new_html, count = re.subn(pattern, lambda m: m.group(1) + block, html, count=1)
-    if count != 1:
-        raise SystemExit(f"Không tìm thấy {object_name} để chèn dữ liệu tuần trước.")
-    return new_html
+    return re.sub(pattern, lambda m: m.group(1) + block, html, count=1)
 
 
 def patch_html(html: str) -> str:
-    html = add_after_object(html, "weeklyProjectProgress", PROJECT_CLEARED)
-    html = add_after_object(html, "weeklyLocalityProgress", LOCALITY_CLEARED)
+    html = add_after_object(html, "weeklyProjectProgress", "weeklyProjectCleared", PROJECT_CLEARED)
+    html = add_after_object(html, "weeklyLocalityProgress", "weeklyLocalityCleared", LOCALITY_CLEARED)
 
-    html, count = re.subn(
+    html = re.sub(
         r'    function formatPct\(value, digits = 2\) \{[\s\S]*?\n    function projectWeeklyMeta\(project\) \{[\s\S]*?\n    \}\n',
         HELPERS,
         html,
         count=1,
     )
-    if count != 1:
-        raise SystemExit("Không thay được nhóm hàm tuần qua.")
 
     html = html.replace(
         '        const week = weeklyProgressMeta(item.progress, weeklyLocalityProgress[item.locality]);',
         '        const week = weeklyProgressMeta(\n          item.progress,\n          weeklyLocalityProgress[item.locality],\n          localityAreaDeltaText(aggregateClearedByUnit(item.rows), weeklyLocalityCleared[item.locality])\n        );',
+    )
+
+    html = re.sub(
+        r'Tuần qua giảm \$\{formatPct\(Math\.abs\(diff\)\)\}%[^`]*- cần rà soát',
+        'Tuần qua không thay đổi - cần rà soát số liệu',
+        html,
     )
     return html
 
