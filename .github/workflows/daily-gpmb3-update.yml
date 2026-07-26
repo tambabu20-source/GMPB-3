@@ -21,6 +21,7 @@ on:
       - "patch_locality_ratio_calc.py"
       - "patch_locality_percent_style.py"
       - "patch_current_timeline.py"
+      - "patch_weekly_progress_delta.py"
 
 concurrency:
   group: gpmb3-dashboard-update
@@ -76,6 +77,9 @@ jobs:
 
       - name: Làm nổi bật mốc hiện nay trong khung 45 ngày
         run: python patch_current_timeline.py --index index.html
+
+      - name: Bổ sung diễn biến tiến độ 07 ngày
+        run: python patch_weekly_progress_delta.py --index index.html
 
       - name: Kiểm tra lần cuối chống lùi tiến độ sau các bước chuẩn hóa
         run: python patch_progress_regression_guard.py --index index.html --baseline index-before-update.html
