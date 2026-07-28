@@ -38,6 +38,7 @@ JS = r'''
         .replace(/Khu đô thị mới Nam/i, "KĐT mới Nam")
         .replace(/đoạn kết nối huyện Tuy An -/i, "Tuy An -")
         .replace(/đoạn phía Bắc cầu An Hải/i, "Bắc cầu An Hải")
+        .replace(/Ven biển(?=đoạn)/i, "Ven biển ")
         .trim();
     }
 
@@ -45,6 +46,7 @@ JS = r'''
       const value = String(text || "").trim().replace(/\s+/g, " ");
       if (!value || !value.includes("/")) return "";
       return value
+        .replace(/([\d.,])(?=km\b|ha\b|m\b)/gi, "$1 ")
         .replace(/\s*Km\b/g, "km")
         .replace(/\s*ha\b/g, "ha")
         .replace(/\s*m\b/g, "m");
