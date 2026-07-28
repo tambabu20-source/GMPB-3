@@ -106,12 +106,8 @@ def patch_html(html: str) -> str:
     html = add_after_object(html, "weeklyProjectProgress", "weeklyProjectCleared", PROJECT_CLEARED)
     html = add_after_object(html, "weeklyLocalityProgress", "weeklyLocalityCleared", LOCALITY_CLEARED)
 
-    html = re.sub(
-        r'    function formatPct\(value, digits = 2\) \{[\s\S]*?\n    function projectWeeklyMeta\(project\) \{[\s\S]*?\n    \}\n',
-        HELPERS,
-        html,
-        count=1,
-    )
+    helper_pattern = r'    function formatPct\(value, digits = 2\) \{[\s\S]*?\n    function projectWeeklyMeta\(project\) \{[\s\S]*?\n    \}\n'
+    html = re.sub(helper_pattern, lambda _m: HELPERS, html, count=1)
 
     html = html.replace(
         '        const week = weeklyProgressMeta(item.progress, weeklyLocalityProgress[item.locality]);',
@@ -120,7 +116,7 @@ def patch_html(html: str) -> str:
 
     html = re.sub(
         r'Tuần qua giảm \$\{formatPct\(Math\.abs\(diff\)\)\}%[^`]*- cần rà soát',
-        'Tuần qua không thay đổi - cần rà soát số liệu',
+        lambda _m: 'Tuần qua không thay đổi - cần rà soát số liệu',
         html,
     )
     return html
