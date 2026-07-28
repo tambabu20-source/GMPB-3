@@ -1896,27 +1896,56 @@
       return Math.max(0, Math.min(100, cleared / total * 100));
     }
 
+    function normalizeLocalityName(value) {
+      const raw = String(value || "")
+        .replace(/^Địa bàn\/tiến độ:\s*/i, "")
+        .replace(/\s+/g, " ")
+        .trim();
+      const canonical = raw
+        .toLowerCase()
+        .replace(/[đĐ]/g, "d")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/^xa\s+|^phuong\s+|^thi tran\s+/i, "")
+        .trim();
+      const names = {
+        "tuy an dong": "xã Tuy An Đông",
+        "tuy an nam": "xã Tuy An Nam",
+        "o loan": "xã Ô Loan",
+        "hoa xuan": "xã Hòa Xuân",
+        "binh kien": "phường Bình Kiến",
+        "phu yen": "phường Phú Yên"
+      };
+      return names[canonical] || raw;
+    }
+
     function extractLocalityRows() {
-      const rows = [];
+      const byKey = new Map();
       const rx = /([^|\n:;]+)[:;]\s*đã bàn giao\s*([^;]+);\s*([\d.,]+)%+;\s*chưa bàn giao\s*([^;]+);\s*còn\s*([\d.,]+)%+/gi;
       projects.forEach(project => {
         const note = String(project.note || "");
         let match;
         while ((match = rx.exec(note)) !== null) {
-          const locality = match[1].replace(/^Địa bàn\/tiến độ:\s*/i, "").trim();
+          const locality = normalizeLocalityName(match[1]);
           const sourceProgress = parseFloat(String(match[3]).replace(",", "."));
           const calculatedProgress = calculateLocalityProgress(match[2]);
-          const progress = Number.isFinite(calculatedProgress) ? calculatedProgress : sourceProgress;
+          const progress = Number.isFinite(sourceProgress) ? sourceProgress : calculatedProgress;
           if (!locality || !Number.isFinite(progress)) continue;
-          rows.push({
+          const projectName = compactLocalityProjectName(project.name);
+          const key = `${locality}::${projectName}`;
+          const row = {
             locality,
-            projectName: compactLocalityProjectName(project.name),
+            projectName,
             progress: Math.max(0, Math.min(100, progress)),
             cleared: compactLocalityArea(match[2])
-          });
+          };
+          const current = byKey.get(key);
+          if (!current || row.progress > current.progress || (!current.cleared && row.cleared)) {
+            byKey.set(key, row);
+          }
         }
       });
-      return rows;
+      return Array.from(byKey.values());
     }
 
     function localityDetail(rows) {
