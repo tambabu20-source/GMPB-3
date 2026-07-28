@@ -126,7 +126,7 @@ JS = r'''
       return rows.map(row => {
         const percent = row.progress.toLocaleString("vi-VN", { maximumFractionDigits: 2 });
         const area = row.cleared ? ` ${row.cleared}` : "";
-        return `${percent}%${area} - ${row.projectName}`;
+        return `${percent}%${area} - ${row.projectName}`.replace(/Ven biển(?=đoạn)/i, "Ven biển ");
       }).join("; ");
     }
 
