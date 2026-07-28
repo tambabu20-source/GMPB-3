@@ -39,6 +39,7 @@ JS = r'''
         .replace(/đoạn kết nối huyện Tuy An -/i, "Tuy An -")
         .replace(/đoạn phía Bắc cầu An Hải/i, "Bắc cầu An Hải")
         .replace(/Ven biển(?=đoạn)/i, "Ven biển ")
+        .replace(/Ven biển\s+đoạn Xuân Đài\s*-\s*Tuy An Đông/i, "Ven biển đoạn Xuân Đài")
         .trim();
     }
 
