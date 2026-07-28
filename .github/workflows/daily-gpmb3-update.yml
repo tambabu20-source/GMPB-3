@@ -48,7 +48,7 @@ jobs:
         run: cp index.html index-before-update.html
 
       - name: Cập nhật dashboard từ Google Drive
-        run: python update_dashboard_from_drive_v2.py --index index.html
+        run: python update_dashboard_from_drive.py --index index.html
 
       - name: Rà soát tỷ lệ GPMB
         run: python patch_progress_safety.py --index index.html
@@ -74,7 +74,7 @@ jobs:
       - name: Chuẩn hóa đơn vị mét dự án 1
         run: python patch_project1_units.py --index index.html
 
-      - name: Chuẩn hóa tiến độ theo phụ lục 24/7/2026
+      - name: Bỏ qua vá lịch sử 24/7 để không ghi đè dữ liệu mới
         run: python patch_latest_20260724_progress.py --index index.html
 
       - name: Làm nổi bật mốc hiện nay trong khung 45 ngày
