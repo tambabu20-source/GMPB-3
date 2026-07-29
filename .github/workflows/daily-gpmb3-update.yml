@@ -24,6 +24,7 @@ on:
       - "patch_weekly_progress_delta.py"
       - "patch_weekly_project_chart.py"
       - "patch_weekly_area_delta.py"
+      - "patch_source_link.py"
 
 concurrency:
   group: gpmb3-dashboard-update
@@ -88,6 +89,9 @@ jobs:
 
       - name: Bổ sung khối lượng tăng giảm tuần qua
         run: python patch_weekly_area_delta.py --index index.html
+
+      - name: Bổ sung link nguồn Google Drive
+        run: python patch_source_link.py --index index.html
 
       - name: Kiểm tra lần cuối chống lùi tiến độ sau các bước chuẩn hóa
         run: python patch_progress_regression_guard.py --index index.html --baseline index-before-update.html
