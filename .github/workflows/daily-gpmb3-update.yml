@@ -25,6 +25,7 @@ on:
       - "patch_weekly_project_chart.py"
       - "patch_weekly_area_delta.py"
       - "patch_chart_readability.py"
+      - "patch_summary_context.py"
       - "patch_source_link.py"
 
 concurrency:
@@ -93,6 +94,9 @@ jobs:
 
       - name: Căn giữa và tăng cỡ chữ biểu đồ
         run: python patch_chart_readability.py --index index.html
+
+      - name: Cập nhật tóm tắt sơ kết và cách tính cơ cấu tiến độ
+        run: python patch_summary_context.py --index index.html
 
       - name: Bổ sung link nguồn Google Drive
         run: python patch_source_link.py --index index.html
