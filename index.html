@@ -2126,7 +2126,9 @@
           const deadline = chartDeadline(project);
           const percentText = known ? `${project.progress.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%` : "Chưa có %";
           const week = projectWeeklyMeta(project);
-          const weekText = week ? `<text x="18" y="${metricY + 22}" font-size="10.8" fill="${week.color}" font-weight="800">${escapeHtml(week.label)}</text>` : "";
+          const zeroReason = chartZeroReason(project);
+          const zeroReasonText = zeroReason ? `<text x="18" y="${metricY + 24}" font-size="10.6" fill="#c2410c" font-weight="850">${escapeHtml(zeroReason)}</text>` : "";
+          const weekText = week ? `<text x="18" y="${metricY + (zeroReason ? 42 : 24)}" font-size="10.8" fill="${week.color}" font-weight="800">${escapeHtml(week.label)}</text>` : "";
           const title = nameLines.map((line, index) => `<tspan x="18" dy="${index ? 16 : 0}">${escapeHtml(line)}</tspan>`).join("");
           cursor = metricY + (zeroReason ? 64 : (week ? 46 : 24));
           return `
