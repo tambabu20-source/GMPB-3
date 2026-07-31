@@ -39,6 +39,30 @@ def patch_mobile_chart_scaling(html: str) -> str:
         "    function fitSvgToViewBox(svg, width, height) {\n"
         "      svg.setAttribute(\"viewBox\", `0 0 ${width} ${height}`);\n",
     )
+
+    mobile_progress_marker = (
+        "          const percentText = known ? `${project.progress.toLocaleString(\"vi-VN\", { maximumFractionDigits: 2 })}%` : \"Chưa có %\";\n"
+        "          const week = projectWeeklyMeta(project);\n"
+    )
+    mobile_progress_fix = (
+        mobile_progress_marker
+        + "          const zeroReason = chartZeroReason(project);\n"
+        + "          const zeroReasonText = zeroReason ? `<text x=\"18\" y=\"${metricY + 24}\" font-size=\"10.6\" fill=\"#c2410c\" font-weight=\"850\">${escapeHtml(zeroReason)}</text>` : \"\";\n"
+    )
+    mobile_block_start = html.find("      if (mobile) {")
+    mobile_block_end = html.find("      const rowHeight = 76;", mobile_block_start)
+    if mobile_block_start != -1 and mobile_block_end != -1:
+        mobile_block = html[mobile_block_start:mobile_block_end]
+        if "const zeroReason = chartZeroReason(project);" not in mobile_block:
+            html = (
+                html[:mobile_block_start]
+                + mobile_block.replace(mobile_progress_marker, mobile_progress_fix, 1)
+                + html[mobile_block_end:]
+            )
+        html = html.replace(
+            '          const weekText = week ? `<text x="18" y="${metricY + 22}" font-size="10.8" fill="${week.color}" font-weight="800">${escapeHtml(week.label)}</text>` : "";',
+            '          const weekText = week ? `<text x="18" y="${metricY + (zeroReason ? 42 : 24)}" font-size="10.8" fill="${week.color}" font-weight="800">${escapeHtml(week.label)}</text>` : "";',
+        )
     return html
 
 
