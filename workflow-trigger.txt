@@ -1,4 +1,4 @@
-Kích hoạt cập nhật dashboard GPMB Tổ công tác số 3: 2026-07-29 15:00 Asia/Ho_Chi_Minh
-Nguồn Drive modified_time: kiểm tra theo workflow tự động
-Nguồn ghi cập nhật tiến độ đến ngày: 29/7/2026
-Yêu cầu: đồng bộ bản dashboard mới nhất lên link GitHub Pages; bổ sung link nguồn Google Drive ở cuối dashboard; nhãn tuần qua nếu giảm thì hiển thị không thay đổi - cần rà soát số liệu.
+Kích hoạt cập nhật dashboard GPMB Tổ công tác số 3: 2026-08-01 15:15 Asia/Ho_Chi_Minh
+Nguồn Drive modified_time: 2026-07-31T16:14:15.928Z
+Nguồn ghi cập nhật tiến độ đến ngày: 30/7/2026
+Yêu cầu: đồng bộ bản dashboard mới nhất lên link GitHub Pages; giữ một link công khai duy nhất https://tambabu20-source.github.io/GMPB-3/; bổ sung/giữ link nguồn Google Drive ở cuối dashboard; không dùng modified_time của Drive để thay ngày số liệu nếu trong bảng chưa có mốc tiến độ mới hơn.
