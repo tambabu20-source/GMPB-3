@@ -1203,7 +1203,7 @@
       <div class="section-head">
         <div>
           <h2>Biểu Đồ Theo Dõi</h2>
-          <p class="hint">Các biểu đồ dùng dữ liệu từ file “TO CONG TAC SO 03 - Theo doi Tien do giai quyet chi tiet tung du an.xlsx” và phụ lục tiến độ kèm Thông báo kết luận số 326/TB-UBND ngày 30/7/2026.</p>
+          <p class="hint">Các biểu đồ dùng dữ liệu từ file “TO CONG TAC SO 03 - Theo doi Tien do giai quyet chi tiet tung du an.xlsx” và phụ lục tiến độ kèm Thông báo kết luận số 326/TB-UBND ngày 17/7/2026.</p>
         </div>
       </div>
       <div class="grid one-col">
@@ -1288,7 +1288,7 @@
         </article>
         <article class="card source-item">
           <strong>THEO DÕI TỔ CÔNG TÁC 03</strong>
-          <span class="hint">Nguồn cập nhật: file “TO CONG TAC SO 03 - Theo doi Tien do giai quyet chi tiet tung du an.xlsx” trên Google Drive - Phụ lục tiến độ kèm Thông báo kết luận số 326/TB-UBND ngày 30/7/2026 của UBND tỉnh. Dashboard đã cập nhật số liệu, vướng mắc, kiến nghị, kế hoạch thực hiện và thời hạn bàn giao mặt bằng theo file nguồn ngày 30/7/2026.</span>
+          <span class="hint">Nguồn cập nhật: file “TO CONG TAC SO 03 - Theo doi Tien do giai quyet chi tiet tung du an.xlsx” trên Google Drive - Phụ lục tiến độ kèm Thông báo kết luận số 326/TB-UBND ngày 17/7/2026 của UBND tỉnh. Dashboard đã cập nhật số liệu, vướng mắc, kiến nghị, kế hoạch thực hiện và thời hạn bàn giao mặt bằng theo file nguồn ngày 30/7/2026.</span>
         </article>
         <article class="card source-item">
           <strong>Liên hệ trong tài liệu theo dõi</strong>
@@ -2039,10 +2039,10 @@
         return;
       }
       const isMobile = window.matchMedia("(max-width: 720px)").matches;
-      const width = isMobile ? 420 : 900;
+      const width = isMobile ? 420 : 1020;
       const top = isMobile ? 30 : 40;
-      const left = isMobile ? 18 : 285;
-      const right = isMobile ? 20 : 40;
+      const left = isMobile ? 18 : 320;
+      const right = isMobile ? 20 : 70;
       const barW = width - left - right;
       const layouts = data.map(item => {
         const detail = localityDetail(item.rows);
@@ -2127,10 +2127,14 @@
           const percentText = known ? `${project.progress.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%` : "Chưa có %";
           const week = projectWeeklyMeta(project);
           const zeroReason = chartZeroReason(project);
-          const zeroReasonText = zeroReason ? `<text x="18" y="${metricY + 24}" font-size="10.6" fill="#c2410c" font-weight="850">${escapeHtml(zeroReason)}</text>` : "";
-          const weekText = week ? `<text x="18" y="${metricY + (zeroReason ? 42 : 24)}" font-size="10.8" fill="${week.color}" font-weight="800">${escapeHtml(week.label)}</text>` : "";
+          const deadlineLines = deadline ? wrapSvgText(`- mốc HT: ${deadline}`, 48).slice(0, 2) : [];
+          const deadlineText = deadlineLines.map((line, index) => `<text x="18" y="${metricY + 18 + index * 15}" font-size="10.3" fill="#1d4ed8" font-weight="850">${escapeHtml(line)}</text>`).join("");
+          const zeroReasonY = metricY + 18 + deadlineLines.length * 15;
+          const zeroReasonText = zeroReason ? `<text x="18" y="${zeroReasonY}" font-size="10.6" fill="#c2410c" font-weight="850">${escapeHtml(zeroReason)}</text>` : "";
+          const weekY = zeroReasonY + (zeroReason ? 17 : 0);
+          const weekText = week ? `<text x="18" y="${weekY}" font-size="10.8" fill="${week.color}" font-weight="800">${escapeHtml(week.label)}</text>` : "";
           const title = nameLines.map((line, index) => `<tspan x="18" dy="${index ? 16 : 0}">${escapeHtml(line)}</tspan>`).join("");
-          cursor = metricY + (zeroReason ? 64 : (week ? 46 : 24));
+          cursor = metricY + 22 + deadlineLines.length * 15 + (zeroReason ? 17 : 0) + (week ? 22 : 0);
           return `
             <text x="18" y="${y}" font-size="12.8" fill="${colors.text}" font-weight="700">${title}</text>
             <rect x="18" y="${barY}" width="${barW}" height="21" rx="8" fill="#e7edf2"/>
@@ -2138,8 +2142,8 @@
             <text x="18" y="${metricY}" font-size="9.4" font-weight="800">
               <tspan fill="${colors.text}">${percentText}</tspan>
               ${ratio ? `<tspan dx="4" fill="${colors.ratio}">(${escapeHtml(ratio)})</tspan>` : ""}
-              ${deadline ? `<tspan dx="5" fill="#1d4ed8">- mốc HT: ${escapeHtml(deadline)}</tspan>` : ""}
             </text>
+            ${deadlineText}
             ${zeroReasonText}
             ${weekText}
           `;
@@ -2149,9 +2153,10 @@
         svg.innerHTML = `<rect x="0" y="0" width="420" height="${height}" fill="transparent"/>${rows}`;
         return;
       }
-      const rowHeight = 76;
+      const rowHeight = 78;
       const chartHeight = 46 + sorted.length * rowHeight;
-      fitSvgToViewBox(svg, 900, chartHeight);
+      const chartWidth = 1080;
+      fitSvgToViewBox(svg, chartWidth, chartHeight);
       const rows = sorted.map((project, i) => {
         const y = 32 + i * rowHeight;
         const isWatchOut = project.order === 9;
@@ -2161,13 +2166,14 @@
           const ct02TitleY = y - (ct02Lines.length > 1 ? 8 : 0);
           return `
             <text x="22" y="${ct02TitleY}" font-size="12" fill="${colors.text}" font-weight="700">${ct02Title}</text>
-            <rect x="500" y="${y - 18}" width="202" height="26" rx="9" fill="#fff7ed" stroke="#fdba74"/>
-            <text x="512" y="${y - 1}" font-size="10.5" fill="${colors.watchOut}" font-weight="800">Đề xuất bỏ ra Danh mục theo dõi</text>
+            <rect x="560" y="${y - 18}" width="230" height="26" rx="9" fill="#fff7ed" stroke="#fdba74"/>
+            <text x="575" y="${y - 1}" font-size="10.5" fill="${colors.watchOut}" font-weight="800">Đề xuất bỏ ra Danh mục theo dõi</text>
           `;
         }
         const known = Number.isFinite(project.progress);
-        const barX = 500;
-        const barW = 220;
+        const barX = 560;
+        const barW = 245;
+        const infoX = 830;
         const displayProgress = known ? Math.max(0, Math.min(100, project.progress)) : 0;
         const w = known ? Math.max(4, displayProgress / 100 * barW) : barW;
         const fill = known ? colors.public : colors.unknown;
@@ -2176,20 +2182,27 @@
         const percentText = known ? `${project.progress.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%` : "Chưa có %";
         const week = projectWeeklyMeta(project);
         const zeroReason = chartZeroReason(project);
+        const deadlineLines = deadline ? wrapSvgText(`- mốc HT: ${deadline}`, 40).slice(0, 2) : [];
+        const deadlineText = deadlineLines.map((line, index) => `<text x="${infoX}" y="${y + 18 + index * 14}" font-size="10.2" fill="#1d4ed8" font-weight="850">${escapeHtml(line)}</text>`).join("");
+        const zeroReasonY = y + 18 + deadlineLines.length * 14;
+        const zeroReasonText = zeroReason ? `<text x="${infoX}" y="${zeroReasonY}" font-size="10.3" fill="#c2410c" font-weight="850">${escapeHtml(zeroReason)}</text>` : "";
+        const weekLines = week ? wrapSvgText(week.label, 42).slice(0, 2) : [];
+        const weekStartY = zeroReasonY + (zeroReason ? 16 : 0);
+        const weekText = weekLines.map((line, index) => `<text x="${infoX}" y="${weekStartY + index * 14}" font-size="10.2" fill="${week.color}" font-weight="800">${escapeHtml(line)}</text>`).join("");
         return `
           <text x="22" y="${y}" font-size="12" fill="${colors.text}" font-weight="700">${escapeHtml(chartProjectName(project.name))}</text>
           <rect x="${barX}" y="${y - 14}" width="${barW}" height="22" rx="8" fill="#e7edf2"/>
           <rect x="${barX}" y="${y - 14}" width="${w}" height="22" rx="8" fill="${fill}"/>
-          <text x="740" y="${y}" font-size="10.2" font-weight="800">
+          <text x="${infoX}" y="${y}" font-size="10.2" font-weight="800">
             <tspan fill="${colors.text}">${percentText}</tspan>
             ${ratio ? `<tspan dx="4" fill="${colors.ratio}">(${escapeHtml(ratio)})</tspan>` : ""}
-            ${deadline ? `<tspan dx="5" fill="#1d4ed8">- mốc HT: ${escapeHtml(deadline)}</tspan>` : ""}
           </text>
-          ${zeroReason ? `<text x="740" y="${y + 19}" font-size="10.5" fill="#c2410c" font-weight="850">${escapeHtml(zeroReason)}</text>` : ""}
-          ${week ? `<text x="740" y="${y + (zeroReason ? 36 : 19)}" font-size="10.5" fill="${week.color}" font-weight="800">${escapeHtml(week.label)}</text>` : ""}
+          ${deadlineText}
+          ${zeroReasonText}
+          ${weekText}
         `;
       }).join("");
-      svg.innerHTML = `<rect x="0" y="0" width="900" height="${chartHeight}" fill="transparent"/>${rows}`;
+      svg.innerHTML = `<rect x="0" y="0" width="${chartWidth}" height="${chartHeight}" fill="transparent"/>${rows}`;
     }
 
     ["q", "fundFilter", "ownerFilter"].forEach(id => {
