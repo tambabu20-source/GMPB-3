@@ -561,7 +561,10 @@ def main() -> int:
             table_date = display_date(line)
             break
     data_date = table_date or compact_date(last_modified) or current_data_date
-    if parse_compact_date(data_date) and parse_compact_date(current_data_date):
+    # The table header is authoritative. If a previous run accidentally used
+    # Drive modified_time as the data date, allow correcting the displayed date
+    # back to the date explicitly written in the source table.
+    if not table_date and parse_compact_date(data_date) and parse_compact_date(current_data_date):
         if parse_compact_date(data_date) < parse_compact_date(current_data_date):
             print(f"Nguồn Drive ngày {data_date} cũ hơn dashboard hiện tại {current_data_date}; bỏ qua để không ghi đè lùi dữ liệu.")
             return 0
