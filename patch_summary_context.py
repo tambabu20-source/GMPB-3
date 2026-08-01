@@ -7,7 +7,7 @@ from pathlib import Path
 
 
 SUMMARY_PARAGRAPHS = [
-    "Cập nhật ngày 29/7/2026, Tổ công tác số 3 đang theo dõi 9 dự án; 7 dự án có tiến độ GPMB lớn hơn 0% để so sánh, 01 dự án đang ở mức 0% do chưa đủ cơ sở kiểm đếm thực địa và CT.02 chưa có diện tích thực địa để tính tỷ lệ, được ghi nhận đề xuất bỏ ra Danh mục theo dõi. Tham khảo báo cáo sơ kết 20 ngày đêm cho thấy công tác chỉ đạo đã được triển khai khẩn trương, có họp đôn đốc, kiểm tra hiện trường và yêu cầu các địa phương, chủ đầu tư cập nhật tiến độ hằng ngày trên file trực tuyến.",
+    "Cập nhật ngày {data_date}, Tổ công tác số 3 đang theo dõi 9 dự án; 7 dự án có tiến độ GPMB lớn hơn 0% để so sánh, 01 dự án đang ở mức 0% do chưa đủ cơ sở kiểm đếm thực địa và CT.02 chưa có diện tích thực địa để tính tỷ lệ, được ghi nhận đề xuất bỏ ra Danh mục theo dõi. Tham khảo báo cáo sơ kết 20 ngày đêm cho thấy công tác chỉ đạo đã được triển khai khẩn trương, có họp đôn đốc, kiểm tra hiện trường và yêu cầu các địa phương, chủ đầu tư cập nhật tiến độ hằng ngày trên file trực tuyến.",
     "Nhóm có kết quả GPMB tốt gồm tuyến đường từ Cảng Bãi Gốc kết nối QL1 đi Khu kinh tế Vân Phong đạt 98,74%, tuyến đường bộ ven biển Tuy An - Tuy Hòa đạt 90,05%, tuyến ven biển phía Bắc cầu An Hải đạt 89,44%. Một số dự án có chuyển biến sau 20 ngày chiến dịch như Khu công viên trung tâm, Hạ tầng kỹ thuật khu dân cư phía Nam, KCN Hòa Tâm và Khu nhà ở xã hội An Phú; riêng tuyến Xuân Đài - Tuy An Đông vẫn 0% do chưa đủ cơ sở kiểm đếm thực địa.",
     "Khó khăn nổi bật tập trung ở việc người dân chưa đồng ý nhận tiền bồi thường và chậm bàn giao mặt bằng; công tác xác định, cung cấp thông tin nguồn gốc đất nông nghiệp còn chậm; hạ tầng cấp nước tại khu tái định cư chưa thống nhất tiếp nhận quản lý, vận hành; giá đất bồi thường tại một số đoạn đường khu tái định cư chưa phù hợp; một số đơn vị, địa phương chưa bảo đảm mốc lập, trình thẩm định và phê duyệt phương án bồi thường.",
     "Thời gian tới tiếp tục bám các mốc 30/7, 31/7, 05/8, 15/8, 20/8, 21/8 và 30/8/2026; duy trì họp Tổ công tác, kiểm tra hiện trường các dự án còn khối lượng lớn, tăng cường nhân lực lập phương án, đẩy mạnh vận động đối thoại, chuẩn bị đầy đủ điều kiện pháp lý để cưỡng chế/bảo vệ thi công khi cần thiết và yêu cầu chủ đầu tư đôn đốc nhà thầu thi công ngay trên diện tích đã có mặt bằng sạch.",
@@ -16,14 +16,21 @@ SUMMARY_PARAGRAPHS = [
 ZERO_REASON = "Nguyên nhân 0%: sai lệch địa chính, chưa đủ cơ sở kiểm đếm"
 
 
+def current_data_date(html: str) -> str:
+    match = re.search(r'const dataUpdatedDate = "([^"]+)"', html)
+    return match.group(1) if match else "30/7/2026"
+
+
 def patch_summary(html: str) -> str:
+    data_date = current_data_date(html)
+    paragraphs = [text.format(data_date=data_date) for text in SUMMARY_PARAGRAPHS]
     patterns = [
         r'<p class="hint">Cập nhật ngày \d{1,2}/\d{1,2}/\d{4}, .*?</p>',
         r'<p class="hint">Nhóm có .*?</p>',
         r'<p class="hint">Khó khăn .*?</p>',
         r'<p class="hint">Thời gian tới .*?</p>',
     ]
-    for pattern, text in zip(patterns, SUMMARY_PARAGRAPHS):
+    for pattern, text in zip(patterns, paragraphs):
         html = re.sub(pattern, f'<p class="hint">{text}</p>', html, count=1, flags=re.S)
     html = re.sub(
         r'<div class="mini-metric"><span>Có tỷ lệ %</span><b>[^<]+</b></div>',
