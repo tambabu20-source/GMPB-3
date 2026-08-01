@@ -202,10 +202,13 @@ def update_from_xlsx_rows(projects: list[dict], rows: list[list[str]], data_date
             row_name = normalize(value_at(row, 1))
             if row_name.startswith("khu tai dinh cu"):
                 continue
-            cleared = value_at(row, 5)
-            remaining = value_at(row, 7)
-            remaining_rate = value_at(row, 8)
-            progress_rate = value_at(row, 6)
+            # O:R are the newest progress columns. Fall back to the baseline
+            # F:I values when a locality has not supplied a new figure.
+            has_latest_progress = any(value_at(row, idx) for idx in (14, 15, 16, 17))
+            cleared = value_at(row, 14) if has_latest_progress else value_at(row, 5)
+            remaining = value_at(row, 16) if has_latest_progress else value_at(row, 7)
+            remaining_rate = value_at(row, 17) if has_latest_progress else value_at(row, 8)
+            progress_rate = value_at(row, 15) if has_latest_progress else value_at(row, 6)
             num = parse_number(cleared)
             if num is not None:
                 cleared_nums.append(num)
@@ -237,24 +240,36 @@ def update_from_xlsx_rows(projects: list[dict], rows: list[list[str]], data_date
             project["remainingRate"] = f"{format_number(100 - float(project.get('progress', 0)), 2)}%" if isinstance(project.get("progress"), (int, float)) else f"{format_number(remaining_rates[0], 2)}%"
 
         issues = joined([value_at(row, 9) for row in group])
+        resolved = joined([value_at(row, 18) for row in group])
         proposals = joined([value_at(row, 10) for row in group])
         plans = joined([value_at(row, 11) for row in group])
+        next_plans = joined([value_at(row, 19) for row in group])
         issue_dates = joined([display_date(value_at(row, 12)) for row in group])
-        handover_dates = [display_date(value_at(row, 13)) for row in group if display_date(value_at(row, 13))]
+        latest_issue_dates = joined([display_date(value_at(row, 20)) for row in group])
+        handover_dates = [
+            display_date(value_at(row, 21) or value_at(row, 13))
+            for row in group
+            if display_date(value_at(row, 21) or value_at(row, 13))
+        ]
         if issues:
-            project["issues"] = issues
-        if proposals or plans:
-            project["proposal"] = "Kiến nghị:\n" + proposals + "\n\nKế hoạch thực hiện/Tiến độ thực hiện:\n" + plans
+            project["issues"] = issues + ("\n\nNội dung vướng mắc đã giải quyết xong:\n" + resolved if resolved else "")
+        if proposals or plans or next_plans:
+            project["proposal"] = (
+                "Kiến nghị:\n" + proposals
+                + "\n\nKế hoạch thực hiện/Tiến độ thực hiện:\n" + plans
+                + ("\n\nKế hoạch thực hiện tiếp theo:\n" + next_plans if next_plans else "")
+            )
         if handover_dates:
             project["deadline"] = "; ".join(dict.fromkeys(handover_dates))
 
         note_parts = []
         for row in group:
             area = value_at(row, 4)
-            cleared = value_at(row, 5)
-            progress = value_at(row, 6)
-            remaining = value_at(row, 7)
-            remain_rate = value_at(row, 8)
+            has_latest_progress = any(value_at(row, idx) for idx in (14, 15, 16, 17))
+            cleared = value_at(row, 14) if has_latest_progress else value_at(row, 5)
+            progress = value_at(row, 15) if has_latest_progress else value_at(row, 6)
+            remaining = value_at(row, 16) if has_latest_progress else value_at(row, 7)
+            remain_rate = value_at(row, 17) if has_latest_progress else value_at(row, 8)
             if area or cleared or progress or remaining or remain_rate:
                 note_parts.append(f"{area}: đã bàn giao {cleared}; {progress}%; chưa bàn giao {remaining}; còn {remain_rate}%")
         if note_parts:
@@ -262,7 +277,8 @@ def update_from_xlsx_rows(projects: list[dict], rows: list[list[str]], data_date
                 "Địa bàn/tiến độ: "
                 + " | ".join(note_parts)
                 + "\nThời gian xử lý xong vướng mắc: "
-                + issue_dates
+                + (latest_issue_dates or issue_dates)
+                + ("\nGhi chú nguồn: " + joined([value_at(row, 22) for row in group]) if joined([value_at(row, 22) for row in group]) else "")
                 + f"\nNguồn cập nhật: file Excel theo dõi tiến độ Tổ công tác số 03 trên Google Drive, cập nhật ngày {data_date}."
             )
 
@@ -523,15 +539,28 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Cập nhật dashboard GPMB Tổ công tác số 3 từ Google Drive XLSX.")
     parser.add_argument("--index", default="index.html")
     parser.add_argument("--drive-url", default=DEFAULT_DRIVE_URL)
+    parser.add_argument("--source-file", help="Bản Office raw đã tải qua Google Drive connector.")
+    parser.add_argument("--modified-time", help="Drive modified_time dạng ISO 8601, dùng cho audit.")
     args = parser.parse_args()
 
     index_path = Path(args.index)
     html = index_path.read_text(encoding="utf-8")
     projects = extract_projects(html)
-    data, last_modified = download_source(args.drive_url)
+    if args.source_file:
+        data = Path(args.source_file).read_bytes()
+        last_modified = None
+    else:
+        data, last_modified = download_source(args.drive_url)
     current_match = re.search(r'const dataUpdatedDate = "([^"]+)"', html)
     current_data_date = current_match.group(1) if current_match else ""
-    data_date = compact_date(last_modified) or current_data_date
+    rows = xlsx_rows(data) if data[:2] == b"PK" else []
+    table_date = ""
+    for row in rows[:12]:
+        line = " ".join(row)
+        if "Cập nhật tiến độ đến ngày" in line:
+            table_date = display_date(line)
+            break
+    data_date = table_date or compact_date(last_modified) or current_data_date
     if parse_compact_date(data_date) and parse_compact_date(current_data_date):
         if parse_compact_date(data_date) < parse_compact_date(current_data_date):
             print(f"Nguồn Drive ngày {data_date} cũ hơn dashboard hiện tại {current_data_date}; bỏ qua để không ghi đè lùi dữ liệu.")
@@ -542,7 +571,7 @@ def main() -> int:
             with zipfile.ZipFile(BytesIO(data)) as zf:
                 names = set(zf.namelist())
             if "xl/workbook.xml" in names:
-                changed = update_from_xlsx_rows(projects, xlsx_rows(data), data_date)
+                changed = update_from_xlsx_rows(projects, rows, data_date)
             else:
                 changed = update_from_table(projects, docx_lines(data), data_date)
         except zipfile.BadZipFile:
@@ -550,7 +579,11 @@ def main() -> int:
     else:
         raise SystemExit("Nguồn Google Drive không phải file Office hợp lệ.")
     new_html = replace_projects(html, projects, data_date)
-    new_html = update_summary(new_html, projects, data_date, last_modified)
+    audit_modified = last_modified
+    if args.modified_time:
+        dt = datetime.fromisoformat(args.modified_time.replace("Z", "+00:00"))
+        audit_modified = dt.strftime("%a, %d %b %Y %H:%M:%S GMT")
+    new_html = update_summary(new_html, projects, data_date, audit_modified)
     new_html = ensure_ct02_chart_marker(new_html)
 
     if changed or new_html != html:
