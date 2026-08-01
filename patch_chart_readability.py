@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 from pathlib import Path
 
 
@@ -137,6 +138,85 @@ def patch_project_chart(html: str) -> str:
     return patch_between(html, "function drawProgressPercentChart()", '["q", "fundFilter", "ownerFilter"]', patch_block)
 
 
+def patch_source_date_and_overflow(html: str) -> str:
+    html = re.sub(
+        r"Thông báo kết luận số 326/TB-UBND ngày \d{1,2}/\d{1,2}/2026",
+        "Thông báo kết luận số 326/TB-UBND ngày 17/7/2026",
+        html,
+    )
+    html = html.replace("const width = isMobile ? 420 : 900;", "const width = isMobile ? 420 : 1020;")
+    html = html.replace("const left = isMobile ? 18 : 285;", "const left = isMobile ? 18 : 320;")
+    html = html.replace("const right = isMobile ? 20 : 40;", "const right = isMobile ? 20 : 70;")
+    html = html.replace(
+        "const detailLines = wrapSvgText(`(${detail})`, isMobile ? 56 : 96).slice(0, isMobile ? 5 : 5);",
+        "const detailLines = wrapSvgText(`(${detail})`, isMobile ? 56 : 118).slice(0, isMobile ? 5 : 5);",
+    )
+
+    html = html.replace(
+        '          const zeroReasonText = zeroReason ? `<text x="18" y="${metricY + 24}" font-size="10.6" fill="#c2410c" font-weight="850">${escapeHtml(zeroReason)}</text>` : "";\n'
+        '          const weekText = week ? `<text x="18" y="${metricY + (zeroReason ? 42 : 24)}" font-size="10.8" fill="${week.color}" font-weight="800">${escapeHtml(week.label)}</text>` : "";\n'
+        '          const title = nameLines.map((line, index) => `<tspan x="18" dy="${index ? 16 : 0}">${escapeHtml(line)}</tspan>`).join("");\n'
+        '          cursor = metricY + (zeroReason ? 64 : (week ? 46 : 24));',
+        '          const deadlineLines = deadline ? wrapSvgText(`- mốc HT: ${deadline}`, 48).slice(0, 2) : [];\n'
+        '          const deadlineText = deadlineLines.map((line, index) => `<text x="18" y="${metricY + 18 + index * 15}" font-size="10.3" fill="#1d4ed8" font-weight="850">${escapeHtml(line)}</text>`).join("");\n'
+        '          const zeroReasonY = metricY + 18 + deadlineLines.length * 15;\n'
+        '          const zeroReasonText = zeroReason ? `<text x="18" y="${zeroReasonY}" font-size="10.6" fill="#c2410c" font-weight="850">${escapeHtml(zeroReason)}</text>` : "";\n'
+        '          const weekY = zeroReasonY + (zeroReason ? 17 : 0);\n'
+        '          const weekText = week ? `<text x="18" y="${weekY}" font-size="10.8" fill="${week.color}" font-weight="800">${escapeHtml(week.label)}</text>` : "";\n'
+        '          const title = nameLines.map((line, index) => `<tspan x="18" dy="${index ? 16 : 0}">${escapeHtml(line)}</tspan>`).join("");\n'
+        '          cursor = metricY + 22 + deadlineLines.length * 15 + (zeroReason ? 17 : 0) + (week ? 22 : 0);',
+    )
+    html = html.replace(
+        '              ${deadline ? `<tspan dx="5" fill="#1d4ed8">- mốc HT: ${escapeHtml(deadline)}</tspan>` : ""}\n'
+        '            </text>\n'
+        '            ${zeroReasonText}',
+        '            </text>\n'
+        '            ${deadlineText}\n'
+        '            ${zeroReasonText}',
+    )
+
+    html = html.replace(
+        "      const rowHeight = 76;\n"
+        "      const chartHeight = 46 + sorted.length * rowHeight;\n"
+        "      fitSvgToViewBox(svg, 900, chartHeight);",
+        "      const rowHeight = 78;\n"
+        "      const chartHeight = 46 + sorted.length * rowHeight;\n"
+        "      const chartWidth = 1080;\n"
+        "      fitSvgToViewBox(svg, chartWidth, chartHeight);",
+    )
+    html = html.replace('x="500" y="${y - 18}" width="202"', 'x="560" y="${y - 18}" width="230"')
+    html = html.replace('x="512" y="${y - 1}"', 'x="575" y="${y - 1}"')
+    html = html.replace("const barX = 500;\n        const barW = 220;", "const barX = 560;\n        const barW = 245;\n        const infoX = 830;")
+    html = html.replace(
+        "        const week = projectWeeklyMeta(project);\n"
+        "        const zeroReason = chartZeroReason(project);\n"
+        "        return `",
+        "        const week = projectWeeklyMeta(project);\n"
+        "        const zeroReason = chartZeroReason(project);\n"
+        "        const deadlineLines = deadline ? wrapSvgText(`- mốc HT: ${deadline}`, 40).slice(0, 2) : [];\n"
+        "        const deadlineText = deadlineLines.map((line, index) => `<text x=\"${infoX}\" y=\"${y + 18 + index * 14}\" font-size=\"10.2\" fill=\"#1d4ed8\" font-weight=\"850\">${escapeHtml(line)}</text>`).join(\"\");\n"
+        "        const zeroReasonY = y + 18 + deadlineLines.length * 14;\n"
+        "        const zeroReasonText = zeroReason ? `<text x=\"${infoX}\" y=\"${zeroReasonY}\" font-size=\"10.3\" fill=\"#c2410c\" font-weight=\"850\">${escapeHtml(zeroReason)}</text>` : \"\";\n"
+        "        const weekLines = week ? wrapSvgText(week.label, 42).slice(0, 2) : [];\n"
+        "        const weekStartY = zeroReasonY + (zeroReason ? 16 : 0);\n"
+        "        const weekText = weekLines.map((line, index) => `<text x=\"${infoX}\" y=\"${weekStartY + index * 14}\" font-size=\"10.2\" fill=\"${week.color}\" font-weight=\"800\">${escapeHtml(line)}</text>`).join(\"\");\n"
+        "        return `",
+    )
+    html = html.replace('<text x="740" y="${y}" font-size="10.2"', '<text x="${infoX}" y="${y}" font-size="10.2"')
+    html = html.replace(
+        '            ${deadline ? `<tspan dx="5" fill="#1d4ed8">- mốc HT: ${escapeHtml(deadline)}</tspan>` : ""}\n'
+        '          </text>\n'
+        '          ${zeroReason ? `<text x="740" y="${y + 19}" font-size="10.5" fill="#c2410c" font-weight="850">${escapeHtml(zeroReason)}</text>` : ""}\n'
+        '          ${week ? `<text x="740" y="${y + (zeroReason ? 36 : 19)}" font-size="10.5" fill="${week.color}" font-weight="800">${escapeHtml(week.label)}</text>` : ""}',
+        '          </text>\n'
+        '          ${deadlineText}\n'
+        '          ${zeroReasonText}\n'
+        '          ${weekText}',
+    )
+    html = html.replace('width="900" height="${chartHeight}"', 'width="${chartWidth}" height="${chartHeight}"')
+    return html
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--index", default="index.html")
@@ -146,6 +226,7 @@ def main() -> None:
     html = patch_css(html)
     html = patch_locality_chart(html)
     html = patch_project_chart(html)
+    html = patch_source_date_and_overflow(html)
     path.write_text(html, encoding="utf-8")
 
 
