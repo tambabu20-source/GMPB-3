@@ -26,6 +26,7 @@ on:
       - "patch_weekly_area_delta.py"
       - "patch_chart_readability.py"
       - "patch_summary_context.py"
+      - "patch_20260808_report.py"
       - "patch_mobile_chart_scaling.py"
       - "patch_source_link.py"
 
@@ -98,6 +99,9 @@ jobs:
 
       - name: Cập nhật tóm tắt sơ kết và cách tính cơ cấu tiến độ
         run: python patch_summary_context.py --index index.html
+
+      - name: Cập nhật theo báo cáo chung Tổ 3 ngày 08/08
+        run: python patch_20260808_report.py --index index.html
 
       - name: Tự cân chiều cao biểu đồ trên điện thoại
         run: python patch_mobile_chart_scaling.py --index index.html
