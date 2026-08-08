@@ -1495,6 +1495,7 @@
       "phường Phú Yên": 71.36,
       "xã Hòa Xuân": 53.84
     };
+    const showWeeklyDelta = false;
     const weeklyLocalityCleared = {
       "xã Tuy An Đông": { km: 6.89 },
       "xã Tuy An Nam": { km: 3.93 },
@@ -1580,6 +1581,7 @@
     }
 
     function weeklyProgressMeta(current, baseline, areaText = "") {
+      if (!showWeeklyDelta) return null;
       if (!Number.isFinite(current) || !Number.isFinite(baseline)) return null;
       const diff = current - baseline;
       const suffix = areaText ? ` ${areaText}` : "";
