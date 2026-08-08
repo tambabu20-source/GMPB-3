@@ -103,6 +103,11 @@ def patch_summary(html: str, projects: list[dict]) -> str:
     html = re.sub(r"Cập nhật số liệu: \d{1,2}/\d{1,2}/\d{4}", f"Cập nhật số liệu: {DATA_DATE}", html)
     html = re.sub(r"Cập nhật ngày \d{1,2}/\d{1,2}/\d{4}", f"Cập nhật ngày {DATA_DATE}", html)
     html = re.sub(r"file nguồn ngày \d{1,2}/\d{1,2}/\d{4}", f"file nguồn ngày {DATA_DATE}", html)
+    html = re.sub(
+        r"Thông báo kết luận số 326/TB-UBND ngày \d{1,2}/\d{1,2}/\d{4}",
+        "Thông báo kết luận số 326/TB-UBND ngày 17/7/2026",
+        html,
+    )
     html = html.replace("Cập nhật tiến độ đến ngày: 46150.0", DATA_DATE)
     html = html.replace("Ghi chú nguồn: 46150.0", f"Ghi chú nguồn: cập nhật ngày {DATA_DATE}")
     html = html.replace("cập nhật ngày 46150.0", f"cập nhật ngày {DATA_DATE}")
