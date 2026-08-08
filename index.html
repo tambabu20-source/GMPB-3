@@ -328,7 +328,7 @@
     }
 
     .chart.locality-progress-chart {
-      min-height: 500px;
+      min-height: 455px;
     }
 
     @media (max-width: 720px) {
@@ -338,7 +338,7 @@
     }
 
     .chart.progress-percent-chart {
-      height: 610px;
+      height: 540px;
     }
 
     .chart.summary-status-chart {
@@ -2043,7 +2043,7 @@
       }
       const isMobile = window.matchMedia("(max-width: 720px)").matches;
       const width = isMobile ? 420 : 1020;
-      const top = isMobile ? 30 : 40;
+      const top = isMobile ? 30 : 30;
       const left = isMobile ? 18 : 320;
       const right = isMobile ? 20 : 70;
       const barW = width - left - right;
@@ -2058,7 +2058,7 @@
         );
         const rowHeight = isMobile
           ? 134 + detailLines.length * 19 + Math.max(0, titleLines.length - 1) * 17
-          : 84 + detailLines.length * 16 + Math.max(0, titleLines.length - 1) * 15;
+          : 66 + detailLines.length * 14 + Math.max(0, titleLines.length - 1) * 13;
         return { item, titleLines, detailLines, week, rowHeight };
       });
       let cursor = top;
@@ -2067,7 +2067,7 @@
         cursor += layout.rowHeight;
         return { ...layout, y };
       });
-      const height = cursor + 24;
+      const height = cursor + (isMobile ? 24 : 12);
       fitSvgToViewBox(svg, width, height);
       svg.innerHTML = positioned.map(({ item, titleLines, detailLines, week, y, rowHeight }) => {
         const progress = Math.max(0, Math.min(100, item.progress));
@@ -2085,9 +2085,9 @@
         }
         const title = titleLines.map((line, lineIndex) => `<tspan x="22" dy="${lineIndex ? 14 : 0}">${escapeHtml(line)}</tspan>`).join("");
         const detailText = detailLines.map((line, lineIndex) => lineIndex === 0 ? `<tspan dx="6" font-size="10.3" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>` : `<tspan x="${left}" dy="15" font-size="9.6" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>`).join("");
-        const weekY = y + 24 + Math.max(1, detailLines.length) * 15;
+        const weekY = y + 22 + Math.max(1, detailLines.length) * 13;
         const weekText = week ? `<text x="${left}" y="${weekY}" font-size="11" fill="${week.color}" font-weight="800">${escapeHtml(week.label)}</text>` : "";
-        return `<text x="22" y="${y}" font-size="13.5" fill="${colors.text}" font-weight="850">${title}</text><rect x="${left}" y="${y - 15}" width="${barW}" height="22" rx="8" fill="#e7edf2"/><rect x="${left}" y="${y - 15}" width="${fillW}" height="22" rx="8" fill="${color}"/><text x="${left}" y="${y + 26}" font-weight="800"><tspan font-size="14.2" fill="${color}">${percent}</tspan>${detailText}</text>${weekText}`;
+        return `<text x="22" y="${y}" font-size="13.5" fill="${colors.text}" font-weight="850">${title}</text><rect x="${left}" y="${y - 14}" width="${barW}" height="20" rx="8" fill="#e7edf2"/><rect x="${left}" y="${y - 14}" width="${fillW}" height="20" rx="8" fill="${color}"/><text x="${left}" y="${y + 24}" font-weight="800"><tspan font-size="14.2" fill="${color}">${percent}</tspan>${detailText}</text>${weekText}`;
       }).join("");
     }
 
@@ -2156,12 +2156,12 @@
         svg.innerHTML = `<rect x="0" y="0" width="420" height="${height}" fill="transparent"/>${rows}`;
         return;
       }
-      const rowHeight = 78;
-      const chartHeight = 46 + sorted.length * rowHeight;
+      const rowHeight = 66;
+      const chartHeight = 38 + sorted.length * rowHeight;
       const chartWidth = 1080;
       fitSvgToViewBox(svg, chartWidth, chartHeight);
       const rows = sorted.map((project, i) => {
-        const y = 32 + i * rowHeight;
+        const y = 28 + i * rowHeight;
         const isWatchOut = project.order === 9;
         if (isWatchOut) {
           const ct02Lines = wrapSvgText(chartProjectName(project.name), 58);
@@ -2169,8 +2169,8 @@
           const ct02TitleY = y - (ct02Lines.length > 1 ? 8 : 0);
           return `
             <text x="22" y="${ct02TitleY}" font-size="12" fill="${colors.text}" font-weight="700">${ct02Title}</text>
-            <rect x="560" y="${y - 18}" width="230" height="26" rx="9" fill="#fff7ed" stroke="#fdba74"/>
-            <text x="575" y="${y - 1}" font-size="10.5" fill="${colors.watchOut}" font-weight="800">Đề xuất bỏ ra Danh mục theo dõi</text>
+            <rect x="560" y="${y - 16}" width="230" height="24" rx="9" fill="#fff7ed" stroke="#fdba74"/>
+            <text x="575" y="${y}" font-size="10.5" fill="${colors.watchOut}" font-weight="800">Đề xuất bỏ ra Danh mục theo dõi</text>
           `;
         }
         const known = Number.isFinite(project.progress);
@@ -2194,8 +2194,8 @@
         const weekText = weekLines.map((line, index) => `<text x="${infoX}" y="${weekStartY + index * 14}" font-size="10.2" fill="${week.color}" font-weight="800">${escapeHtml(line)}</text>`).join("");
         return `
           <text x="22" y="${y}" font-size="12" fill="${colors.text}" font-weight="700">${escapeHtml(chartProjectName(project.name))}</text>
-          <rect x="${barX}" y="${y - 16}" width="${barW}" height="22" rx="8" fill="#e7edf2"/>
-          <rect x="${barX}" y="${y - 16}" width="${w}" height="22" rx="8" fill="${fill}"/>
+          <rect x="${barX}" y="${y - 15}" width="${barW}" height="20" rx="8" fill="#e7edf2"/>
+          <rect x="${barX}" y="${y - 15}" width="${w}" height="20" rx="8" fill="${fill}"/>
           <text x="${infoX}" y="${y}" font-size="10.2" font-weight="800">
             <tspan fill="${colors.text}">${percentText}</tspan>
             ${ratio ? `<tspan dx="4" fill="${colors.ratio}">(${escapeHtml(ratio)})</tspan>` : ""}
