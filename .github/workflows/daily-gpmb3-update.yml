@@ -30,6 +30,7 @@ on:
       - "patch_mobile_chart_scaling.py"
       - "patch_source_link.py"
       - "patch_actual_weekly_baseline.py"
+      - "patch_hide_weekly_delta.py"
       - "patch_final_source_dates.py"
 
 concurrency:
@@ -116,6 +117,9 @@ jobs:
 
       - name: Cập nhật mốc so sánh tuần qua theo tuần trước
         run: python patch_actual_weekly_baseline.py --index index.html
+
+      - name: Tạm ẩn nhãn tuần qua
+        run: python patch_hide_weekly_delta.py --index index.html
 
       - name: Khóa ngày nguồn hiển thị cuối cùng
         run: python patch_final_source_dates.py --index index.html
