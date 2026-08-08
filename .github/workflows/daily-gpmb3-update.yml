@@ -28,6 +28,7 @@ on:
       - "patch_summary_context.py"
       - "patch_20260808_report.py"
       - "patch_mobile_chart_scaling.py"
+      - "patch_compact_desktop_charts.py"
       - "patch_source_link.py"
       - "patch_actual_weekly_baseline.py"
       - "patch_hide_weekly_delta.py"
@@ -108,6 +109,9 @@ jobs:
 
       - name: Tự cân chiều cao biểu đồ trên điện thoại
         run: python patch_mobile_chart_scaling.py --index index.html
+
+      - name: Thu gọn khoảng cách biểu đồ desktop
+        run: python patch_compact_desktop_charts.py --index index.html
 
       - name: Bổ sung link nguồn Google Drive
         run: python patch_source_link.py --index index.html
