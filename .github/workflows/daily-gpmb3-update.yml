@@ -29,6 +29,7 @@ on:
       - "patch_20260808_report.py"
       - "patch_mobile_chart_scaling.py"
       - "patch_source_link.py"
+      - "patch_actual_weekly_baseline.py"
       - "patch_final_source_dates.py"
 
 concurrency:
@@ -112,6 +113,9 @@ jobs:
 
       - name: Kiểm tra lần cuối chống lùi tiến độ sau các bước chuẩn hóa
         run: python patch_progress_regression_guard.py --index index.html --baseline index-before-update.html
+
+      - name: Cập nhật mốc so sánh tuần qua theo tuần trước
+        run: python patch_actual_weekly_baseline.py --index index.html
 
       - name: Khóa ngày nguồn hiển thị cuối cùng
         run: python patch_final_source_dates.py --index index.html
