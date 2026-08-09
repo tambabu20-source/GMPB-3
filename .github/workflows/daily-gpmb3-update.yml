@@ -34,6 +34,7 @@ on:
       - "patch_actual_weekly_baseline.py"
       - "patch_hide_weekly_delta.py"
       - "patch_campaign_delta_charts.py"
+      - "patch_campaign_delta_labels.py"
       - "patch_final_source_dates.py"
 
 concurrency:
@@ -132,6 +133,9 @@ jobs:
 
       - name: Hiển thị mức tăng so với trước chiến dịch
         run: python patch_campaign_delta_charts.py --index index.html
+
+      - name: Chốt nhãn tăng so với trước chiến dịch
+        run: python patch_campaign_delta_labels.py --index index.html
 
       - name: Khóa ngày nguồn hiển thị cuối cùng
         run: python patch_final_source_dates.py --index index.html
