@@ -2087,6 +2087,8 @@
         const detail = localityDetail(item.rows);
         const titleLines = wrapSvgText(item.locality, isMobile ? 44 : 42).slice(0, 2);
         const detailLines = wrapSvgText(`(${detail})`, isMobile ? 50 : 96).slice(0, isMobile ? 6 : 5);
+        const campaign = localityCampaignMeta(item.locality);
+        const campaignLines = campaign ? wrapSvgText(campaign.label, isMobile ? 56 : 118).slice(0, 2) : [];
         const week = weeklyProgressMeta(
           item.progress,
           weeklyLocalityProgress[item.locality],
