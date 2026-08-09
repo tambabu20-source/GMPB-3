@@ -2,7 +2,10 @@
 from __future__ import annotations
 
 import argparse
+import re
+from datetime import date, datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 
 STYLE_MARKER = ".phase.current-phase"
@@ -41,34 +44,63 @@ STYLE_BLOCK = """
 """
 
 STYLE_ANCHOR = "    .phase:nth-child(4) { border-left-color: var(--accent-3); }\n"
-OLD_PHASE = """        <article class=\"card card-pad phase\">
-          <strong>Ngày 11-30 · Tập trung xử lý</strong>"""
-NEW_PHASE = """        <article class=\"card card-pad phase current-phase\">
-          <span class=\"current-badge\">Mốc hiện nay</span>
-          <strong>Ngày 11-30 · Tập trung xử lý</strong>"""
+PHASES = [
+    ("Ngày 1-10", date(2026, 7, 7), date(2026, 7, 16)),
+    ("Ngày 11-30", date(2026, 7, 17), date(2026, 8, 5)),
+    ("Ngày 31-45", date(2026, 8, 6), date(2026, 8, 20)),
+]
 
 
-def patch(html: str) -> str:
+def current_phase_label(today: date) -> str:
+    for label, start, end in PHASES:
+        if start <= today <= end:
+            return label
+    if today < PHASES[0][1]:
+        return PHASES[0][0]
+    return PHASES[-1][0]
+
+
+def mark_current_phase(html: str, phase_label: str) -> str:
+    html = re.sub(r"\s*<span class=\"current-badge\">Mốc hiện nay</span>\n", "\n", html)
+    html = html.replace('class="card card-pad phase current-phase"', 'class="card card-pad phase"')
+    pattern = re.compile(
+        rf'(<article class="card card-pad phase">\n)(\s*<strong>{re.escape(phase_label)}[^<]*</strong>)',
+        re.MULTILINE,
+    )
+    replacement = (
+        '<article class="card card-pad phase current-phase">\n'
+        '          <span class="current-badge">Mốc hiện nay</span>\n'
+        r"\2"
+    )
+    html, count = pattern.subn(replacement, html, count=1)
+    if count != 1:
+        raise SystemExit(f"Không tìm thấy mốc {phase_label} để tô nổi.")
+    return html
+
+
+def patch(html: str, today: date) -> str:
     if STYLE_MARKER not in html:
         if STYLE_ANCHOR not in html:
             raise SystemExit("Không tìm thấy vị trí CSS của khung điều hành 45 ngày.")
         html = html.replace(STYLE_ANCHOR, STYLE_ANCHOR + STYLE_BLOCK, 1)
+    return mark_current_phase(html, current_phase_label(today))
 
-    if "card card-pad phase current-phase" in html and "<span class=\"current-badge\">Mốc hiện nay</span>" in html:
-        return html
-    if OLD_PHASE not in html:
-        raise SystemExit("Không tìm thấy mốc Ngày 11-30 để tô nổi.")
-    return html.replace(OLD_PHASE, NEW_PHASE, 1)
+
+def parse_today(value: str | None) -> date:
+    if value:
+        return date.fromisoformat(value)
+    return datetime.now(ZoneInfo("Asia/Ho_Chi_Minh")).date()
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Tô nổi mốc hiện nay trong khung điều hành 45 ngày.")
     parser.add_argument("--index", default="index.html")
+    parser.add_argument("--today", help="Ngày kiểm tra dạng YYYY-MM-DD; mặc định theo giờ Việt Nam.")
     args = parser.parse_args()
 
     path = Path(args.index)
     html = path.read_text(encoding="utf-8")
-    updated = patch(html)
+    updated = patch(html, parse_today(args.today))
     path.write_text(updated, encoding="utf-8")
     print("Đã làm nổi mốc hiện nay trong khung điều hành 45 ngày.")
     return 0
