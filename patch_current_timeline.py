@@ -45,23 +45,29 @@ STYLE_BLOCK = """
 
 STYLE_ANCHOR = "    .phase:nth-child(4) { border-left-color: var(--accent-3); }\n"
 PHASES = [
-    ("Ngày 1-10", date(2026, 7, 7), date(2026, 7, 16)),
-    ("Ngày 11-30", date(2026, 7, 17), date(2026, 8, 5)),
-    ("Ngày 31-45", date(2026, 8, 6), date(2026, 8, 20)),
+    ("Ngày 1-10", 1, date(2026, 7, 7), date(2026, 7, 16)),
+    ("Ngày 11-30", 2, date(2026, 7, 17), date(2026, 8, 5)),
+    ("Ngày 31-45", 3, date(2026, 8, 6), date(2026, 8, 20)),
 ]
+PLAN_START = date(2026, 7, 7)
+PLAN_DAYS = 45
 
 
-def current_phase_label(today: date) -> str:
-    for label, start, end in PHASES:
+def current_phase(today: date) -> tuple[str, int]:
+    for label, stage, start, end in PHASES:
         if start <= today <= end:
-            return label
-    if today < PHASES[0][1]:
-        return PHASES[0][0]
-    return PHASES[-1][0]
+            return label, stage
+    if today < PHASES[0][2]:
+        return PHASES[0][0], PHASES[0][1]
+    return PHASES[-1][0], PHASES[-1][1]
 
 
-def mark_current_phase(html: str, phase_label: str) -> str:
-    html = re.sub(r"\s*<span class=\"current-badge\">Mốc hiện nay</span>\n", "\n", html)
+def plan_day(today: date) -> int:
+    return max(1, min(PLAN_DAYS, (today - PLAN_START).days + 1))
+
+
+def mark_current_phase(html: str, phase_label: str, day_number: int) -> str:
+    html = re.sub(r"\s*<span class=\"current-badge\">[^<]*</span>\n", "\n", html)
     html = html.replace('class="card card-pad phase current-phase"', 'class="card card-pad phase"')
     pattern = re.compile(
         rf'(<article class="card card-pad phase">\n)(\s*<strong>{re.escape(phase_label)}[^<]*</strong>)',
@@ -69,7 +75,7 @@ def mark_current_phase(html: str, phase_label: str) -> str:
     )
     replacement = (
         '<article class="card card-pad phase current-phase">\n'
-        '          <span class="current-badge">Mốc hiện nay</span>\n'
+        f'          <span class="current-badge">Mốc hiện nay · Ngày thứ {day_number}/45</span>\n'
         r"\2"
     )
     html, count = pattern.subn(replacement, html, count=1)
@@ -83,7 +89,21 @@ def patch(html: str, today: date) -> str:
         if STYLE_ANCHOR not in html:
             raise SystemExit("Không tìm thấy vị trí CSS của khung điều hành 45 ngày.")
         html = html.replace(STYLE_ANCHOR, STYLE_ANCHOR + STYLE_BLOCK, 1)
-    return mark_current_phase(html, current_phase_label(today))
+    phase_label, stage = current_phase(today)
+    day_number = plan_day(today)
+    html = re.sub(
+        r"Từ ngày ban hành Kế hoạch 295/KH-UBND, thực hiện liên tục kể cả ngày nghỉ khi cần thiết(?:\. Ngày \d{2}/\d{1,2}/\d{4} là ngày thứ \d+/45, thuộc giai đoạn \d+)?\.",
+        f"Từ ngày ban hành Kế hoạch 295/KH-UBND, thực hiện liên tục kể cả ngày nghỉ khi cần thiết. Ngày {today.strftime('%d/%-m/%Y')} là ngày thứ {day_number}/45, thuộc giai đoạn {stage}.",
+        html,
+        count=1,
+    )
+    html = re.sub(
+        r"Báo cáo chung Tổ 3 kỳ đến ngày 07/8/2026 cho thấy chiến dịch đã bước sang ngày thứ \d+, thuộc Giai đoạn \d+\.",
+        f"Theo ngày hiện tại {today.strftime('%d/%-m/%Y')}, chiến dịch đang ở ngày thứ {day_number}/45, thuộc Giai đoạn {stage}.",
+        html,
+        count=1,
+    )
+    return mark_current_phase(html, phase_label, day_number)
 
 
 def parse_today(value: str | None) -> date:
