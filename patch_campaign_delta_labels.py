@@ -61,14 +61,14 @@ html = html.replace(
     "        const campaign = localityCampaignMeta(item.locality);",
 )
 
-if "const campaignLines = campaign ? wrapSvgText(campaign.label" not in html:
-    html = re.sub(
-        r"(        const detailLines = wrapSvgText\(`\(\$\{detail\}\)`, isMobile \? \d+ : \d+\)\.slice\(0, isMobile \? \d+ : \d+\);\n)",
-        r"\1        const campaign = localityCampaignMeta(item.locality);\n"
-        r"        const campaignLines = campaign ? wrapSvgText(campaign.label, isMobile ? 56 : 118).slice(0, 2) : [];\n",
-        html,
-        count=1,
-    )
+html = re.sub(
+    r"(        const detailLines = wrapSvgText\(`\(\$\{detail\}\)`, isMobile \? \d+ : \d+\)\.slice\(0, isMobile \? \d+ : \d+\);\n)"
+    r"(?!        const campaign = localityCampaignMeta)",
+    r"\1        const campaign = localityCampaignMeta(item.locality);\n"
+    r"        const campaignLines = campaign ? wrapSvgText(campaign.label, isMobile ? 56 : 118).slice(0, 2) : [];\n",
+    html,
+    count=1,
+)
 
 html = html.replace(
     "        return { item, titleLines, detailLines, week, rowHeight };",
