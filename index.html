@@ -2038,7 +2038,7 @@
           ? rows.filter(row => row.progress > 0)
           : rows;
         const avg = rowsForAverage.reduce((sum, row) => sum + row.progress, 0) / rowsForAverage.length;
-        return { locality, rows, progress: Math.max(0, Math.min(100, avg)) };
+        return { locality, rows, rowsForAverage, progress: Math.max(0, Math.min(100, avg)) };
       }).sort((a, b) => b.progress - a.progress || a.locality.localeCompare(b.locality, "vi"));
       if (!data.length) {
         svg.innerHTML = `<text x="24" y="48" font-size="14" fill="${colors.muted}" font-weight="700">Chưa có dữ liệu địa phương để thống kê.</text>`;
@@ -2060,9 +2060,9 @@
           localityAreaDeltaText(aggregateClearedByUnit(item.rows), weeklyLocalityCleared[item.locality])
         );
         const rowHeight = isMobile
-          ? 134 + detailLines.length * 19 + Math.max(0, titleLines.length - 1) * 17
-          : 66 + detailLines.length * 14 + Math.max(0, titleLines.length - 1) * 13;
-        return { item, titleLines, detailLines, week, rowHeight };
+          ? 134 + detailLines.length * 19 + campaignLines.length * 16 + Math.max(0, titleLines.length - 1) * 17
+          : 66 + detailLines.length * 14 + campaignLines.length * 13 + Math.max(0, titleLines.length - 1) * 13;
+        return { item, titleLines, detailLines, campaign, campaignLines, week, rowHeight };
       });
       let cursor = top;
       const positioned = layouts.map(layout => {
@@ -2072,7 +2072,7 @@
       });
       const height = cursor + (isMobile ? 24 : 12);
       fitSvgToViewBox(svg, width, height);
-      svg.innerHTML = positioned.map(({ item, titleLines, detailLines, week, y, rowHeight }) => {
+      svg.innerHTML = positioned.map(({ item, titleLines, detailLines, campaign, campaignLines, week, y, rowHeight }) => {
         const progress = Math.max(0, Math.min(100, item.progress));
         const fillW = Math.max(4, progress / 100 * barW);
         const color = progress >= 90 ? colors.public : progress >= 70 ? "#2f855a" : progress > 0 ? "#d97706" : colors.unknown;
@@ -2088,9 +2088,11 @@
         }
         const title = titleLines.map((line, lineIndex) => `<tspan x="22" dy="${lineIndex ? 14 : 0}">${escapeHtml(line)}</tspan>`).join("");
         const detailText = detailLines.map((line, lineIndex) => lineIndex === 0 ? `<tspan dx="6" font-size="10.3" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>` : `<tspan x="${left}" dy="15" font-size="9.6" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>`).join("");
-        const weekY = y + 22 + Math.max(1, detailLines.length) * 13;
+        const campaignY = y + 22 + Math.max(1, detailLines.length) * 13;
+        const campaignText = campaignLines.map((line, lineIndex) => `<text x="${left}" y="${campaignY + lineIndex * 13}" font-size="9.6" fill="${campaign.color}" font-weight="800">${escapeHtml(line)}</text>`).join("");
+        const weekY = campaignY + campaignLines.length * 13;
         const weekText = week ? `<text x="${left}" y="${weekY}" font-size="11" fill="${week.color}" font-weight="800">${escapeHtml(week.label)}</text>` : "";
-        return `<text x="22" y="${y}" font-size="13.5" fill="${colors.text}" font-weight="850">${title}</text><rect x="${left}" y="${y - 14}" width="${barW}" height="20" rx="8" fill="#e7edf2"/><rect x="${left}" y="${y - 14}" width="${fillW}" height="20" rx="8" fill="${color}"/><text x="${left}" y="${y + 24}" font-weight="800"><tspan font-size="14.2" fill="${color}">${percent}</tspan>${detailText}</text>${weekText}`;
+        return `<text x="22" y="${y}" font-size="14.5" fill="${colors.text}" font-weight="850">${title}</text><rect x="${left}" y="${y - 14}" width="${barW}" height="20" rx="8" fill="#e7edf2"/><rect x="${left}" y="${y - 14}" width="${fillW}" height="20" rx="8" fill="${color}"/><text x="${left}" y="${y + 24}" font-weight="800"><tspan font-size="14.2" fill="${color}">${percent}</tspan>${detailText}</text>${campaignText}${weekText}`;
       }).join("");
     }
 
@@ -2129,19 +2131,16 @@
           const w = known ? Math.max(4, displayProgress / 100 * barW) : barW;
           const fill = known ? colors.public : colors.unknown;
           const ratio = compactAreaRatio(project);
-          const deadline = chartDeadline(project);
           const percentText = known ? `${project.progress.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%` : "Chưa có %";
-          const week = projectWeeklyMeta(project);
+          const campaign = projectCampaignMeta(project);
           const zeroReason = chartZeroReason(project);
-          const deadlineLines = deadline ? wrapSvgText(`- mốc HT: ${deadline}`, 48).slice(0, 2) : [];
-          const deadlineText = deadlineLines.map((line, index) => `<text x="18" y="${metricY + 18 + index * 15}" font-size="10.3" fill="#1d4ed8" font-weight="850">${escapeHtml(line)}</text>`).join("");
-          const zeroReasonY = metricY + 18 + deadlineLines.length * 15;
+          const campaignLines = campaign ? wrapSvgText(campaign.label, 48).slice(0, 2) : [];
+          const campaignText = campaignLines.map((line, index) => `<text x="18" y="${metricY + 18 + index * 15}" font-size="10.3" fill="${campaign.color}" font-weight="850">${escapeHtml(line)}</text>`).join("");
+          const zeroReasonY = metricY + 18 + campaignLines.length * 15;
           const zeroReasonLines = zeroReason ? wrapSvgText(zeroReason, 52).slice(0, 2) : [];
           const zeroReasonText = zeroReasonLines.map((line, index) => `<text x="18" y="${zeroReasonY + index * 15}" font-size="10.6" fill="#c2410c" font-weight="850">${escapeHtml(line)}</text>`).join("");
-          const weekY = zeroReasonY + zeroReasonLines.length * 15;
-          const weekText = week ? `<text x="18" y="${weekY}" font-size="10.8" fill="${week.color}" font-weight="800">${escapeHtml(week.label)}</text>` : "";
           const title = nameLines.map((line, index) => `<tspan x="18" dy="${index ? 16 : 0}">${escapeHtml(line)}</tspan>`).join("");
-          cursor = metricY + 22 + deadlineLines.length * 15 + zeroReasonLines.length * 15 + (week ? 22 : 0);
+          cursor = metricY + 22 + campaignLines.length * 15 + zeroReasonLines.length * 15;
           return `
             <text x="18" y="${y}" font-size="12.8" fill="${colors.text}" font-weight="700">${title}</text>
             <rect x="18" y="${barY}" width="${barW}" height="21" rx="8" fill="#e7edf2"/>
@@ -2150,9 +2149,8 @@
               <tspan fill="${colors.text}">${percentText}</tspan>
               ${ratio ? `<tspan dx="4" fill="${colors.ratio}">(${escapeHtml(ratio)})</tspan>` : ""}
             </text>
-            ${deadlineText}
+            ${campaignText}
             ${zeroReasonText}
-            ${weekText}
           `;
         }).join("");
         const height = Math.max(420, cursor + 8);
@@ -2185,18 +2183,14 @@
         const w = known ? Math.max(4, displayProgress / 100 * barW) : barW;
         const fill = known ? colors.public : colors.unknown;
         const ratio = compactAreaRatio(project);
-        const deadline = chartDeadline(project);
         const percentText = known ? `${project.progress.toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%` : "Chưa có %";
-        const week = projectWeeklyMeta(project);
+        const campaign = projectCampaignMeta(project);
         const zeroReason = chartZeroReason(project);
-        const deadlineLines = deadline ? wrapSvgText(`- mốc HT: ${deadline}`, 40).slice(0, 2) : [];
-        const deadlineText = deadlineLines.map((line, index) => `<text x="${infoX}" y="${y + 18 + index * 14}" font-size="10.2" fill="#1d4ed8" font-weight="850">${escapeHtml(line)}</text>`).join("");
-        const zeroReasonY = y + 18 + deadlineLines.length * 14;
+        const campaignLines = campaign ? wrapSvgText(campaign.label, 40).slice(0, 2) : [];
+        const campaignText = campaignLines.map((line, index) => `<text x="${infoX}" y="${y + 18 + index * 14}" font-size="10.2" fill="${campaign.color}" font-weight="850">${escapeHtml(line)}</text>`).join("");
+        const zeroReasonY = y + 18 + campaignLines.length * 14;
         const zeroReasonLines = zeroReason ? wrapSvgText(zeroReason, 37).slice(0, 2) : [];
         const zeroReasonText = zeroReasonLines.map((line, index) => `<text x="${infoX}" y="${zeroReasonY + index * 14}" font-size="10.3" fill="#c2410c" font-weight="850">${escapeHtml(line)}</text>`).join("");
-        const weekLines = week ? wrapSvgText(week.label, 42).slice(0, 2) : [];
-        const weekStartY = zeroReasonY + zeroReasonLines.length * 14;
-        const weekText = weekLines.map((line, index) => `<text x="${infoX}" y="${weekStartY + index * 14}" font-size="10.2" fill="${week.color}" font-weight="800">${escapeHtml(line)}</text>`).join("");
         return `
           <text x="22" y="${y}" font-size="12" fill="${colors.text}" font-weight="700">${escapeHtml(chartProjectName(project.name))}</text>
           <rect x="${barX}" y="${y - 15}" width="${barW}" height="20" rx="8" fill="#e7edf2"/>
@@ -2205,9 +2199,8 @@
             <tspan fill="${colors.text}">${percentText}</tspan>
             ${ratio ? `<tspan dx="4" fill="${colors.ratio}">(${escapeHtml(ratio)})</tspan>` : ""}
           </text>
-          ${deadlineText}
+          ${campaignText}
           ${zeroReasonText}
-          ${weekText}
         `;
       }).join("");
       svg.innerHTML = `<rect x="0" y="0" width="${chartWidth}" height="${chartHeight}" fill="transparent"/>${rows}`;
