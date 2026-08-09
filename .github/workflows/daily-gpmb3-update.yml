@@ -90,9 +90,6 @@ jobs:
       - name: Bỏ qua vá lịch sử 24/7 để không ghi đè dữ liệu mới
         run: python patch_latest_20260724_progress.py --index index.html
 
-      - name: Làm nổi bật mốc hiện nay trong khung 45 ngày
-        run: python patch_current_timeline.py --index index.html
-
       - name: Bổ sung diễn biến tiến độ 07 ngày
         run: python patch_weekly_progress_delta.py --index index.html
 
@@ -110,6 +107,9 @@ jobs:
 
       - name: Cập nhật theo báo cáo chung Tổ 3 ngày 08/08
         run: python patch_20260808_report.py --index index.html
+
+      - name: Làm nổi bật mốc hiện nay trong khung 45 ngày
+        run: python patch_current_timeline.py --index index.html
 
       - name: Tự cân chiều cao biểu đồ trên điện thoại
         run: python patch_mobile_chart_scaling.py --index index.html
