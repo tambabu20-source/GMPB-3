@@ -2034,7 +2034,10 @@
         grouped.get(row.locality).push(row);
       });
       const data = Array.from(grouped, ([locality, rows]) => {
-        const avg = rows.reduce((sum, row) => sum + row.progress, 0) / rows.length;
+        const rowsForAverage = rows.some(row => row.progress > 0)
+          ? rows.filter(row => row.progress > 0)
+          : rows;
+        const avg = rowsForAverage.reduce((sum, row) => sum + row.progress, 0) / rowsForAverage.length;
         return { locality, rows, progress: Math.max(0, Math.min(100, avg)) };
       }).sort((a, b) => b.progress - a.progress || a.locality.localeCompare(b.locality, "vi"));
       if (!data.length) {
@@ -2133,11 +2136,12 @@
           const deadlineLines = deadline ? wrapSvgText(`- mốc HT: ${deadline}`, 48).slice(0, 2) : [];
           const deadlineText = deadlineLines.map((line, index) => `<text x="18" y="${metricY + 18 + index * 15}" font-size="10.3" fill="#1d4ed8" font-weight="850">${escapeHtml(line)}</text>`).join("");
           const zeroReasonY = metricY + 18 + deadlineLines.length * 15;
-          const zeroReasonText = zeroReason ? `<text x="18" y="${zeroReasonY}" font-size="10.6" fill="#c2410c" font-weight="850">${escapeHtml(zeroReason)}</text>` : "";
-          const weekY = zeroReasonY + (zeroReason ? 17 : 0);
+          const zeroReasonLines = zeroReason ? wrapSvgText(zeroReason, 52).slice(0, 2) : [];
+          const zeroReasonText = zeroReasonLines.map((line, index) => `<text x="18" y="${zeroReasonY + index * 15}" font-size="10.6" fill="#c2410c" font-weight="850">${escapeHtml(line)}</text>`).join("");
+          const weekY = zeroReasonY + zeroReasonLines.length * 15;
           const weekText = week ? `<text x="18" y="${weekY}" font-size="10.8" fill="${week.color}" font-weight="800">${escapeHtml(week.label)}</text>` : "";
           const title = nameLines.map((line, index) => `<tspan x="18" dy="${index ? 16 : 0}">${escapeHtml(line)}</tspan>`).join("");
-          cursor = metricY + 22 + deadlineLines.length * 15 + (zeroReason ? 17 : 0) + (week ? 22 : 0);
+          cursor = metricY + 22 + deadlineLines.length * 15 + zeroReasonLines.length * 15 + (week ? 22 : 0);
           return `
             <text x="18" y="${y}" font-size="12.8" fill="${colors.text}" font-weight="700">${title}</text>
             <rect x="18" y="${barY}" width="${barW}" height="21" rx="8" fill="#e7edf2"/>
@@ -2188,9 +2192,10 @@
         const deadlineLines = deadline ? wrapSvgText(`- mốc HT: ${deadline}`, 40).slice(0, 2) : [];
         const deadlineText = deadlineLines.map((line, index) => `<text x="${infoX}" y="${y + 18 + index * 14}" font-size="10.2" fill="#1d4ed8" font-weight="850">${escapeHtml(line)}</text>`).join("");
         const zeroReasonY = y + 18 + deadlineLines.length * 14;
-        const zeroReasonText = zeroReason ? `<text x="${infoX}" y="${zeroReasonY}" font-size="10.3" fill="#c2410c" font-weight="850">${escapeHtml(zeroReason)}</text>` : "";
+        const zeroReasonLines = zeroReason ? wrapSvgText(zeroReason, 37).slice(0, 2) : [];
+        const zeroReasonText = zeroReasonLines.map((line, index) => `<text x="${infoX}" y="${zeroReasonY + index * 14}" font-size="10.3" fill="#c2410c" font-weight="850">${escapeHtml(line)}</text>`).join("");
         const weekLines = week ? wrapSvgText(week.label, 42).slice(0, 2) : [];
-        const weekStartY = zeroReasonY + (zeroReason ? 16 : 0);
+        const weekStartY = zeroReasonY + zeroReasonLines.length * 14;
         const weekText = weekLines.map((line, index) => `<text x="${infoX}" y="${weekStartY + index * 14}" font-size="10.2" fill="${week.color}" font-weight="800">${escapeHtml(line)}</text>`).join("");
         return `
           <text x="22" y="${y}" font-size="12" fill="${colors.text}" font-weight="700">${escapeHtml(chartProjectName(project.name))}</text>
