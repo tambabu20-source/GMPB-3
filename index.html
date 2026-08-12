@@ -1922,6 +1922,21 @@
         .trim();
     }
 
+
+    function compactDetailLabel(text) {
+      return String(text || "")
+        .replace(/Tuyến đường bộ ven biển,?\s*/gi, "Ven biển ")
+        .replace(/Ven biển\s+đoạn\s+/gi, "Ven biển ")
+        .replace(/Tuyến đường giao thông từ\s+/gi, "")
+        .replace(/Khu công nghiệp Hòa Tâm - Giai đoạn 1/gi, "KCN Hòa Tâm")
+        .replace(/Khu công viên trung tâm thuộc KĐT mới Nam/gi, "Công viên trung tâm KĐT mới Nam")
+        .replace(/Hạ tầng kỹ thuật khu dân cư phía Nam thuộc KĐT mới Nam/gi, "HTKT KDC phía Nam")
+        .replace(/Thành phố Tuy Hòa/gi, "TP Tuy Hòa")
+        .replace(/Khu kinh tế Vân Phong/gi, "KKT Vân Phong")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
     function compactDeadline(deadline) {
       if (!deadline) return "";
       const dates = deadline.match(/\d{1,2}\/\d{1,2}(?:\/\d{4})?/g);
