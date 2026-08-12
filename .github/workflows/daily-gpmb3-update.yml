@@ -36,6 +36,7 @@ on:
       - "patch_hide_weekly_delta.py"
       - "patch_campaign_delta_charts.py"
       - "patch_campaign_delta_labels.py"
+      - "patch_summary_area_metrics.py"
       - "patch_final_source_dates.py"
 
 concurrency:
@@ -140,6 +141,9 @@ jobs:
 
       - name: Chốt nhãn tăng so với trước chiến dịch
         run: python patch_campaign_delta_labels.py --index index.html
+
+      - name: Bổ sung nhãn tổng hợp khối lượng GPMB
+        run: python patch_summary_area_metrics.py --index index.html
 
       - name: Khóa ngày nguồn hiển thị cuối cùng
         run: python patch_final_source_dates.py --index index.html
