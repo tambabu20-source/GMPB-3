@@ -144,6 +144,9 @@ jobs:
       - name: Khóa ngày nguồn hiển thị cuối cùng
         run: python patch_final_source_dates.py --index index.html
 
+      - name: Chốt TB 378 và ngày hiện tại sau bước khóa ngày nguồn
+        run: python patch_tb378_current_day.py --index index.html
+
       - name: Commit nếu có số liệu mới
         run: |
           git config user.name "github-actions[bot]"
