@@ -155,6 +155,32 @@ jobs:
       - name: Chốt lỗi biểu đồ và thứ tự đơn vị trước khi xuất bản
         run: python patch_final_chart_guard.py --index index.html
 
+      - name: Khóa cách tính biểu đồ xã phường
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          path = Path("index.html")
+          text = path.read_text(encoding="utf-8")
+          replacement = '''    function weightedLocalityProgress(rows) {
+                const usable = rows.filter(row => row.progress > 0);
+                const basis = usable.length ? usable : rows;
+                if (!basis.length) return 0;
+                return basis.reduce((sum, row) => sum + row.progress, 0) / basis.length;
+              }
+          '''
+          text, count = re.subn(
+              r"    function weightedLocalityProgress\(rows\) \{\n.*?\n    \}\n\n    function normalizeLocalityName",
+              replacement + "\n    function normalizeLocalityName",
+              text,
+              count=1,
+              flags=re.S,
+          )
+          if count != 1:
+              raise SystemExit("Không tìm thấy hàm weightedLocalityProgress để khóa cách tính xã/phường")
+          path.write_text(text, encoding="utf-8")
+          PY
+
       - name: Commit nếu có số liệu mới
         run: |
           git config user.name "github-actions[bot]"
