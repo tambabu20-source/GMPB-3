@@ -1857,9 +1857,9 @@
 
     function compactCampaignLabel(label) {
       return String(label || "")
-        .replace(/^So với trước chiến dịch\s+/i, "So trước chiến dịch ")
         .replace(/^So trước chiến dịch\s+/i, "So trước chiến dịch ")
-        .replace(/^So trước CĐ\s+/i, "So trước chiến dịch ")
+        .replace(/^So trước chiến dịch\s+/i, "So trước chiến dịch ")
+        .replace(/^So trước chiến dịch\s+/i, "So trước chiến dịch ")
         .replace(/không thay đổi/i, "không đổi")
         .replace(/\s+/g, " ")
         .trim();
