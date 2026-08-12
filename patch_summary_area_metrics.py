@@ -58,20 +58,24 @@ if ".summary-area-metrics" not in html:
         1,
     )
 
+html = html.replace("29,62 km + 578,25 ha", "578,25 ha + 29,62 km")
+html = html.replace("28,18 km + 381,77 ha", "381,77 ha + 28,18 km")
+html = html.replace("1,00 km + 77,21 ha", "77,21 ha + 1,00 km")
+
 if "Tổng diện tích/chiều dài phải GPMB 7 dự án" not in html:
     block = """
           <div class="summary-area-metrics" aria-label="Tổng hợp khối lượng GPMB 7 dự án">
             <div class="summary-area-metric">
               <span>Tổng diện tích/chiều dài phải GPMB 7 dự án</span>
-              <b>29,62 km + 578,25 ha</b>
+              <b>578,25 ha + 29,62 km</b>
             </div>
             <div class="summary-area-metric">
               <span>Tổng diện tích/chiều dài đã GPMB đến nay 7 dự án</span>
-              <b>28,18 km + 381,77 ha</b>
+              <b>381,77 ha + 28,18 km</b>
             </div>
             <div class="summary-area-metric campaign">
               <span>Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>
-              <b>1,00 km + 77,21 ha</b>
+              <b>77,21 ha + 1,00 km</b>
             </div>
           </div>"""
     html = html.replace(
