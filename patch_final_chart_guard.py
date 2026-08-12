@@ -255,9 +255,9 @@ def patch_final_chart_guard(html: str) -> str:
     )
     html = html.replace(
         '        const campaignLine = campaign ? oneLineText(compactCampaignLabel(campaign.label), isMobile ? 58 : 118) : "";\n'
+        "        const campaignLines = campaignLine ? [campaignLine] : [];\n"
         "        const week = weeklyProgressMeta(\n",
         '        const campaignLine = campaign ? oneLineText(compactCampaignLabel(campaign.label), isMobile ? 58 : 118) : "";\n'
-        "        const campaignLines = campaignLine ? [campaignLine] : [];\n"
         "        const week = weeklyProgressMeta(\n",
     )
     html = html.replace(
@@ -268,11 +268,59 @@ def patch_final_chart_guard(html: str) -> str:
         "        const detail = compactDetailLabel(localityDetail(item.rows));\n"
         "        const titleLines = wrapSvgText(item.locality, isMobile ? 44 : 42).slice(0, 2);\n"
         "        const detailLine = oneLineText(`(${detail})`, isMobile ? 58 : 138);\n"
+        "        const campaign = localityCampaignMeta(item.locality, item.progress, item.rowsForAverage);\n"
+        '        const campaignLine = campaign ? oneLineText(compactCampaignLabel(campaign.label), isMobile ? 58 : 118) : "";\n'
+        "        const week = weeklyProgressMeta(\n",
+    )
+    html = html.replace(
+        "        const detailLine = oneLineText(`(${detail})`, isMobile ? 58 : 138);\n"
         "        const detailLines = detailLine ? [detailLine] : [];\n"
         "        const campaign = localityCampaignMeta(item.locality, item.progress, item.rowsForAverage);\n"
         '        const campaignLine = campaign ? oneLineText(compactCampaignLabel(campaign.label), isMobile ? 58 : 118) : "";\n'
-        "        const campaignLines = campaignLine ? [campaignLine] : [];\n"
-        "        const week = weeklyProgressMeta(\n",
+        "        const campaignLines = campaignLine ? [campaignLine] : [];\n",
+        "        const detailLine = oneLineText(`(${detail})`, isMobile ? 58 : 138);\n"
+        "        const campaign = localityCampaignMeta(item.locality, item.progress, item.rowsForAverage);\n"
+        '        const campaignLine = campaign ? oneLineText(compactCampaignLabel(campaign.label), isMobile ? 58 : 118) : "";\n',
+    )
+    html = html.replace(
+        "        const rowHeight = isMobile\n"
+        "          ? 134 + detailLines.length * 19 + campaignLines.length * 16 + Math.max(0, titleLines.length - 1) * 17\n"
+        "          : 66 + detailLines.length * 14 + campaignLines.length * 13 + Math.max(0, titleLines.length - 1) * 13;\n"
+        "        return { item, titleLines, detailLines, campaign, campaignLines, week, rowHeight };\n",
+        "        const rowHeight = isMobile\n"
+        "          ? 126 + Math.max(0, titleLines.length - 1) * 17\n"
+        "          : 76 + Math.max(0, titleLines.length - 1) * 13;\n"
+        "        return { item, titleLines, detailLine, campaign, campaignLine, week, rowHeight };\n",
+    )
+    html = html.replace(
+        "      svg.innerHTML = positioned.map(({ item, titleLines, detailLines, campaign, campaignLines, week, y, rowHeight }) => {\n",
+        "      svg.innerHTML = positioned.map(({ item, titleLines, detailLine, campaign, campaignLine, week, y, rowHeight }) => {\n",
+    )
+    html = html.replace(
+        '          const detailText = detailLines.map((line, lineIndex) => lineIndex === 0 ? `<tspan dx="7" font-size="9.8" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>` : `<tspan x="18" dy="17" font-size="9.8" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>`).join("");\n'
+        "          const weekY = barY + 38 + Math.max(1, detailLines.length) * 18;\n"
+        '          const weekText = week ? `<text x="18" y="${weekY}" font-size="10.9" fill="${week.color}" font-weight="800">${escapeHtml(week.label)}</text>` : "";\n'
+        "          const dividerY = y + rowHeight - 12;\n"
+        '          return `<text x="18" y="${y}" font-size="12.8" fill="${colors.text}" font-weight="850">${title}</text><rect x="18" y="${barY}" width="372" height="18" rx="8" fill="#e7edf2"/><rect x="18" y="${barY}" width="${Math.max(4, progress / 100 * 372)}" height="18" rx="8" fill="${color}"/><text x="18" y="${barY + 36}" font-weight="800"><tspan font-size="14.2" fill="${color}">${percent}</tspan>${detailText}</text>${weekText}<line x1="18" x2="402" y1="${dividerY}" y2="${dividerY}" stroke="#e7edf2" stroke-width="1"/>`;\n',
+        '          const detailText = detailLine ? `<tspan dx="6" font-size="8.9" fill="${colors.muted}" font-weight="700">${escapeHtml(detailLine)}</tspan>` : "";\n'
+        "          const campaignY = barY + 58;\n"
+        '          const campaignText = campaignLine ? `<text x="18" y="${campaignY}" font-size="9.6" fill="${campaign.color}" font-weight="800">${escapeHtml(campaignLine)}</text>` : "";\n'
+        "          const weekY = campaignY + (campaignLine ? 15 : 0);\n"
+        '          const weekText = week ? `<text x="18" y="${weekY}" font-size="10.9" fill="${week.color}" font-weight="800">${escapeHtml(week.label)}</text>` : "";\n'
+        "          const dividerY = y + rowHeight - 22;\n"
+        '          return `<text x="18" y="${y}" font-size="12.8" fill="${colors.text}" font-weight="850">${title}</text><rect x="18" y="${barY}" width="372" height="18" rx="8" fill="#e7edf2"/><rect x="18" y="${barY}" width="${Math.max(4, progress / 100 * 372)}" height="18" rx="8" fill="${color}"/><text x="18" y="${barY + 36}" font-weight="800"><tspan font-size="14.2" fill="${color}">${percent}</tspan>${detailText}</text>${campaignText}${weekText}<line x1="18" x2="402" y1="${dividerY}" y2="${dividerY}" stroke="#e7edf2" stroke-width="1"/>`;\n',
+    )
+    html = html.replace(
+        '        const detailText = detailLines.map((line, lineIndex) => lineIndex === 0 ? `<tspan dx="6" font-size="10.3" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>` : `<tspan x="${left}" dy="15" font-size="9.6" fill="${colors.muted}" font-weight="700">${escapeHtml(line)}</tspan>`).join("");\n'
+        "        const campaignY = y + 22 + Math.max(1, detailLines.length) * 13;\n"
+        '        const campaignText = campaignLines.map((line, lineIndex) => `<text x="${left}" y="${campaignY + lineIndex * 13}" font-size="9.6" fill="${campaign.color}" font-weight="800">${escapeHtml(line)}</text>`).join("");\n'
+        "        const weekY = campaignY + campaignLines.length * 13;\n"
+        '        const weekText = week ? `<text x="${left}" y="${weekY}" font-size="11" fill="${week.color}" font-weight="800">${escapeHtml(week.label)}</text>` : "";\n',
+        '        const detailText = detailLine ? `<tspan dx="6" font-size="9.6" fill="${colors.muted}" font-weight="700">${escapeHtml(detailLine)}</tspan>` : "";\n'
+        "        const campaignY = y + 40;\n"
+        '        const campaignText = campaignLine ? `<text x="${left}" y="${campaignY}" font-size="9.9" fill="${campaign.color}" font-weight="800">${escapeHtml(campaignLine)}</text>` : "";\n'
+        "        const weekY = campaignY + (campaignLine ? 13 : 0);\n"
+        '        const weekText = week ? `<text x="${left}" y="${weekY}" font-size="11" fill="${week.color}" font-weight="800">${escapeHtml(week.label)}</text>` : "";\n',
     )
     html = html.replace(
         "Tổng diện tích/chiều dài phải GPMB 7 dự án</span>\n              <b>29,62 km + 578,25 ha</b>",
