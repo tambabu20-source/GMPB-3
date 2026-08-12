@@ -8,6 +8,62 @@ from pathlib import Path
 def patch_final_chart_guard(html: str) -> str:
     html = html.replace("So với trước chiến dịch", "So trước chiến dịch")
     html = html.replace("So trước CĐ", "So trước chiến dịch")
+    if "function oneLineText(" not in html:
+        label_helpers = """
+    function oneLineText(text, maxChars = 80) {
+      return clipLabel(String(text || "").replace(/\\s+/g, " ").trim(), maxChars);
+    }
+
+    function compactCampaignLabel(label) {
+      return String(label || "")
+        .replace(/^So với trước chiến dịch\\s+/i, "So trước chiến dịch ")
+        .replace(/^So trước chiến dịch\\s+/i, "So trước chiến dịch ")
+        .replace(/^So trước CĐ\\s+/i, "So trước chiến dịch ")
+        .replace(/không thay đổi/i, "không đổi")
+        .replace(/\\s+/g, " ")
+        .trim();
+    }
+
+    function compactDetailLabel(text) {
+      return String(text || "")
+        .replace(/Tuyến đường bộ ven biển,?\\s*/gi, "Ven biển ")
+        .replace(/Ven biển\\s+đoạn\\s+/gi, "Ven biển ")
+        .replace(/Tuyến đường giao thông từ\\s+/gi, "")
+        .replace(/Khu công nghiệp Hòa Tâm - Giai đoạn 1/gi, "KCN Hòa Tâm")
+        .replace(/Khu công viên trung tâm thuộc KĐT mới Nam/gi, "Công viên trung tâm KĐT mới Nam")
+        .replace(/Hạ tầng kỹ thuật khu dân cư phía Nam thuộc KĐT mới Nam/gi, "HTKT KDC phía Nam")
+        .replace(/Thành phố Tuy Hòa/gi, "TP Tuy Hòa")
+        .replace(/Khu kinh tế Vân Phong/gi, "KKT Vân Phong")
+        .replace(/\\s+/g, " ")
+        .trim();
+    }
+"""
+        html = html.replace(
+            "    function compactDeadline(deadline) {",
+            label_helpers + "\n    function compactDeadline(deadline) {",
+            1,
+        )
+    elif "function compactDetailLabel(" not in html:
+        detail_helper = """
+    function compactDetailLabel(text) {
+      return String(text || "")
+        .replace(/Tuyến đường bộ ven biển,?\\s*/gi, "Ven biển ")
+        .replace(/Ven biển\\s+đoạn\\s+/gi, "Ven biển ")
+        .replace(/Tuyến đường giao thông từ\\s+/gi, "")
+        .replace(/Khu công nghiệp Hòa Tâm - Giai đoạn 1/gi, "KCN Hòa Tâm")
+        .replace(/Khu công viên trung tâm thuộc KĐT mới Nam/gi, "Công viên trung tâm KĐT mới Nam")
+        .replace(/Hạ tầng kỹ thuật khu dân cư phía Nam thuộc KĐT mới Nam/gi, "HTKT KDC phía Nam")
+        .replace(/Thành phố Tuy Hòa/gi, "TP Tuy Hòa")
+        .replace(/Khu kinh tế Vân Phong/gi, "KKT Vân Phong")
+        .replace(/\\s+/g, " ")
+        .trim();
+    }
+"""
+        html = html.replace(
+            "    function compactDeadline(deadline) {",
+            detail_helper + "\n    function compactDeadline(deadline) {",
+            1,
+        )
     if "function projectCampaignMeta(project)" not in html:
         helper_anchor = """    function localityAreaDeltaText(currentByUnit, baselineByUnit) {
       if (!baselineByUnit) return "";
