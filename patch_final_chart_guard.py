@@ -8,33 +8,126 @@ from pathlib import Path
 def patch_final_chart_guard(html: str) -> str:
     html = html.replace("So với trước chiến dịch", "So trước chiến dịch")
     html = html.replace("So trước CĐ", "So trước chiến dịch")
+    html = html.replace(
+        '"clearedArea": "13,14/14,59 ha",',
+        '"clearedArea": "13,26/14,59 ha",',
+    )
+    html = html.replace(
+        '"remainingArea": "1,45 ha",\n            "remainingRate": "9,94%",',
+        '"remainingArea": "1,33 ha",\n            "remainingRate": "9,12%",',
+        1,
+    )
+    html = html.replace(
+        '"progress": 90.06',
+        '"progress": 90.88',
+        1,
+    )
+    html = html.replace(
+        '"clearedArea": "22,34/23,79 ha",',
+        '"clearedArea": "22,69/23,79 ha",',
+    )
+    html = html.replace(
+        '"remainingArea": "1,45 ha",\n            "remainingRate": "6,09%",',
+        '"remainingArea": "1,10 ha",\n            "remainingRate": "4,62%",',
+        1,
+    )
+    html = html.replace(
+        '"progress": 93.91',
+        '"progress": 95.38',
+        1,
+    )
+    html = html.replace("Hạ tầng kỹ thuật khu dân cư phía Nam đạt 93,91%", "Hạ tầng kỹ thuật khu dân cư phía Nam đạt 95,38%")
+    html = html.replace("Khu công viên trung tâm đạt 90,06%", "Khu công viên trung tâm đạt 90,88%")
+    html = html.replace(
+        '<div class="mini-metric"><span>Bình quân 7 dự án có tiến độ</span><b>89,35%</b></div>',
+        '<div class="mini-metric"><span>Bình quân 7 dự án có tiến độ</span><b>89,67%</b></div>',
+    )
+    html = html.replace(
+        '<div class="mini-metric"><span>Bình quân 7 dự án có tiến độ</span><b>89,58%</b></div>',
+        '<div class="mini-metric"><span>Bình quân 7 dự án có tiến độ</span><b>89,67%</b></div>',
+    )
+    if "function weightedLocalityProgress(rows)" not in html:
+        html = html.replace(
+            """    function calculateLocalityProgress(clearedText) {
+      const match = String(clearedText || "").match(/([\\d.,]+)\\s*\\/\\s*([\\d.,]+)\\s*([a-zA-Z]*)/);
+      if (!match) return null;
+      const unit = match[3] || "";
+      const cleared = readLocalityNumber(match[1], unit);
+      const total = readLocalityNumber(match[2], unit);
+      if (!Number.isFinite(cleared) || !Number.isFinite(total) || total <= 0) return null;
+      return Math.max(0, Math.min(100, cleared / total * 100));
+    }
+""",
+            """    function calculateLocalityProgress(clearedText) {
+      const match = String(clearedText || "").match(/([\\d.,]+)\\s*\\/\\s*([\\d.,]+)\\s*([a-zA-Z]*)/);
+      if (!match) return null;
+      const unit = match[3] || "";
+      const cleared = readLocalityNumber(match[1], unit);
+      const total = readLocalityNumber(match[2], unit);
+      if (!Number.isFinite(cleared) || !Number.isFinite(total) || total <= 0) return null;
+      return Math.max(0, Math.min(100, cleared / total * 100));
+    }
+
+    function parseLocalityAreaParts(clearedText) {
+      const match = String(clearedText || "").match(/([\\d.,]+)\\s*\\/\\s*([\\d.,]+)\\s*([a-zA-Z]*)/);
+      if (!match) return null;
+      const unit = (match[3] || "").toLowerCase();
+      const cleared = readLocalityNumber(match[1], unit);
+      const total = readLocalityNumber(match[2], unit);
+      if (!Number.isFinite(cleared) || !Number.isFinite(total) || total <= 0) return null;
+      return { cleared, total, unit };
+    }
+
+    function weightedLocalityProgress(rows) {
+      const usable = rows.filter(row => row.progress > 0);
+      const basis = usable.length ? usable : rows;
+      const areaRows = basis.map(row => row.areaParts).filter(Boolean);
+      const units = new Set(areaRows.map(row => row.unit));
+      if (areaRows.length === basis.length && units.size === 1) {
+        const cleared = areaRows.reduce((sum, row) => sum + row.cleared, 0);
+        const total = areaRows.reduce((sum, row) => sum + row.total, 0);
+        if (total > 0) return Math.max(0, Math.min(100, cleared / total * 100));
+      }
+      return basis.reduce((sum, row) => sum + row.progress, 0) / basis.length;
+    }
+""",
+            1,
+        )
+    html = html.replace(
+        "            progress: Math.max(0, Math.min(100, progress)),\n            cleared: compactLocalityArea(match[2])",
+        "            progress: Math.max(0, Math.min(100, progress)),\n            cleared: compactLocalityArea(match[2]),\n            areaParts: parseLocalityAreaParts(match[2])",
+    )
+    html = html.replace(
+        "        const avg = rowsForAverage.reduce((sum, row) => sum + row.progress, 0) / rowsForAverage.length;\n        return { locality, rows, rowsForAverage, progress: Math.max(0, Math.min(100, avg)) };",
+        "        const progress = weightedLocalityProgress(rows);\n        return { locality, rows, rowsForAverage, progress: Math.max(0, Math.min(100, progress)) };",
+    )
     if "function oneLineText(" not in html:
         label_helpers = """
     function oneLineText(text, maxChars = 80) {
-      return clipLabel(String(text || "").replace(/\\s+/g, " ").trim(), maxChars);
+      return clipLabel(String(text || "").replace(/\s+/g, " ").trim(), maxChars);
     }
 
     function compactCampaignLabel(label) {
       return String(label || "")
-        .replace(/^So với trước chiến dịch\\s+/i, "So trước chiến dịch ")
-        .replace(/^So trước chiến dịch\\s+/i, "So trước chiến dịch ")
-        .replace(/^So trước CĐ\\s+/i, "So trước chiến dịch ")
+        .replace(/^So với trước chiến dịch\s+/i, "So trước chiến dịch ")
+        .replace(/^So trước chiến dịch\s+/i, "So trước chiến dịch ")
+        .replace(/^So trước CĐ\s+/i, "So trước chiến dịch ")
         .replace(/không thay đổi/i, "không đổi")
-        .replace(/\\s+/g, " ")
+        .replace(/\s+/g, " ")
         .trim();
     }
 
     function compactDetailLabel(text) {
       return String(text || "")
-        .replace(/Tuyến đường bộ ven biển,?\\s*/gi, "Ven biển ")
-        .replace(/Ven biển\\s+đoạn\\s+/gi, "Ven biển ")
-        .replace(/Tuyến đường giao thông từ\\s+/gi, "")
+        .replace(/Tuyến đường bộ ven biển,?\s*/gi, "Ven biển ")
+        .replace(/Ven biển\s+đoạn\s+/gi, "Ven biển ")
+        .replace(/Tuyến đường giao thông từ\s+/gi, "")
         .replace(/Khu công nghiệp Hòa Tâm - Giai đoạn 1/gi, "KCN Hòa Tâm")
         .replace(/Khu công viên trung tâm thuộc KĐT mới Nam/gi, "Công viên trung tâm KĐT mới Nam")
         .replace(/Hạ tầng kỹ thuật khu dân cư phía Nam thuộc KĐT mới Nam/gi, "HTKT KDC phía Nam")
         .replace(/Thành phố Tuy Hòa/gi, "TP Tuy Hòa")
         .replace(/Khu kinh tế Vân Phong/gi, "KKT Vân Phong")
-        .replace(/\\s+/g, " ")
+        .replace(/\s+/g, " ")
         .trim();
     }
 """
@@ -47,15 +140,15 @@ def patch_final_chart_guard(html: str) -> str:
         detail_helper = """
     function compactDetailLabel(text) {
       return String(text || "")
-        .replace(/Tuyến đường bộ ven biển,?\\s*/gi, "Ven biển ")
-        .replace(/Ven biển\\s+đoạn\\s+/gi, "Ven biển ")
-        .replace(/Tuyến đường giao thông từ\\s+/gi, "")
+        .replace(/Tuyến đường bộ ven biển,?\s*/gi, "Ven biển ")
+        .replace(/Ven biển\s+đoạn\s+/gi, "Ven biển ")
+        .replace(/Tuyến đường giao thông từ\s+/gi, "")
         .replace(/Khu công nghiệp Hòa Tâm - Giai đoạn 1/gi, "KCN Hòa Tâm")
         .replace(/Khu công viên trung tâm thuộc KĐT mới Nam/gi, "Công viên trung tâm KĐT mới Nam")
         .replace(/Hạ tầng kỹ thuật khu dân cư phía Nam thuộc KĐT mới Nam/gi, "HTKT KDC phía Nam")
         .replace(/Thành phố Tuy Hòa/gi, "TP Tuy Hòa")
         .replace(/Khu kinh tế Vân Phong/gi, "KKT Vân Phong")
-        .replace(/\\s+/g, " ")
+        .replace(/\s+/g, " ")
         .trim();
     }
 """
@@ -96,8 +189,8 @@ def patch_final_chart_guard(html: str) -> str:
       1: { text: "tăng 3,2% (0,4 km)", color: colors.weekUp },
       2: { text: "tăng 8% (0,6 km)", color: colors.weekUp },
       3: { text: "chưa phát sinh tăng (0 km)", color: colors.weekFlat },
-      4: { text: "tăng 15% (1,45 ha)", color: colors.weekUp },
-      5: { text: "tăng 21,6% (5,14 ha)", color: colors.weekUp },
+      4: { text: "tăng 15,9% (2,32 ha)", color: colors.weekUp },
+      5: { text: "tăng 27,87% (6,63 ha)", color: colors.weekUp },
       6: { text: "tăng 14% (69,3055 ha)", color: colors.weekUp },
       7: { text: "tăng 1,26% (0,52 ha)", color: colors.weekUp },
       8: { text: "tăng 11,4% (0,7939 ha)", color: colors.weekUp }
@@ -107,7 +200,7 @@ def patch_final_chart_guard(html: str) -> str:
       "xã Ô Loan": { text: "không thay đổi (0 km)", color: colors.weekFlat },
       "xã Tuy An Nam": { text: "tăng 2,2% (0,1 km)", color: colors.weekUp },
       "phường Bình Kiến": { text: "tăng 11,97% (0,2741 km; 0,7939 ha)", color: colors.weekUp },
-      "phường Phú Yên": { text: "tăng 18,3% (6,59 ha)", color: colors.weekUp },
+      "phường Phú Yên": { text: "tăng 23,32% (8,95 ha)", color: colors.weekUp },
       "xã Tuy An Đông": { text: "tăng 4% (0,6 km)", color: colors.weekUp },
       "xã Hòa Xuân": { text: "tăng 7,63% (69,8255 ha)", color: colors.weekUp }
     };
@@ -163,15 +256,39 @@ def patch_final_chart_guard(html: str) -> str:
     )
     html = html.replace(
         "Tổng diện tích/chiều dài phải GPMB 7 dự án</span>\n              <b>29,62 km + 578,25 ha</b>",
+        "Tổng diện tích/chiều dài phải GPMB 7 dự án</span>\n              <b>578,25 ha + 25,55 km</b>",
+    )
+    html = html.replace(
         "Tổng diện tích/chiều dài phải GPMB 7 dự án</span>\n              <b>578,25 ha + 29,62 km</b>",
+        "Tổng diện tích/chiều dài phải GPMB 7 dự án</span>\n              <b>578,25 ha + 25,55 km</b>",
     )
     html = html.replace(
         "Tổng diện tích/chiều dài đã GPMB đến nay 7 dự án</span>\n              <b>28,18 km + 381,77 ha</b>",
+        "Tổng diện tích/chiều dài đã GPMB đến nay 7 dự án</span>\n              <b>382,24 ha + 20,89 km</b>",
+    )
+    html = html.replace(
         "Tổng diện tích/chiều dài đã GPMB đến nay 7 dự án</span>\n              <b>381,77 ha + 28,18 km</b>",
+        "Tổng diện tích/chiều dài đã GPMB đến nay 7 dự án</span>\n              <b>382,24 ha + 20,89 km</b>",
+    )
+    html = html.replace(
+        "Tổng diện tích/chiều dài đã GPMB đến nay 7 dự án</span>\n              <b>382,24 ha + 28,18 km</b>",
+        "Tổng diện tích/chiều dài đã GPMB đến nay 7 dự án</span>\n              <b>382,24 ha + 20,89 km</b>",
     )
     html = html.replace(
         "Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>\n              <b>1,00 km + 77,21 ha</b>",
+        "Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>\n              <b>79,57 ha + 0,99 km</b>",
+    )
+    html = html.replace(
         "Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>\n              <b>77,21 ha + 1,00 km</b>",
+        "Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>\n              <b>79,57 ha + 0,99 km</b>",
+    )
+    html = html.replace(
+        "Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>\n              <b>77,68 ha + 1,00 km</b>",
+        "Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>\n              <b>79,57 ha + 0,99 km</b>",
+    )
+    html = html.replace(
+        "Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>\n              <b>79,57 ha + 1,00 km</b>",
+        "Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>\n              <b>79,57 ha + 0,99 km</b>",
     )
     return html
 
