@@ -10,35 +10,7 @@ on:
       - ".github/workflows/daily-gpmb3-update.yml"
       - "workflow-trigger.txt"
       - "update_dashboard_from_drive.py"
-      - "update_dashboard_from_drive_v2.py"
-      - "patch_ct02_chart.py"
-      - "patch_progress_safety.py"
-      - "patch_progress_regression_guard.py"
-      - "patch_locality_chart.py"
-      - "patch_project1_units.py"
-      - "patch_latest_20260724_progress.py"
-      - "patch_locality_mobile_css.py"
-      - "patch_locality_ratio_calc.py"
-      - "patch_locality_percent_style.py"
-      - "patch_chart_zero_and_locality_average.py"
-      - "patch_current_timeline.py"
-      - "patch_weekly_progress_delta.py"
-      - "patch_weekly_project_chart.py"
-      - "patch_weekly_area_delta.py"
-      - "patch_chart_readability.py"
-      - "patch_summary_context.py"
-      - "patch_20260808_report.py"
-      - "patch_tb378_current_day.py"
-      - "patch_mobile_chart_scaling.py"
-      - "patch_compact_desktop_charts.py"
-      - "patch_source_link.py"
-      - "patch_actual_weekly_baseline.py"
-      - "patch_hide_weekly_delta.py"
-      - "patch_campaign_delta_charts.py"
-      - "patch_campaign_delta_labels.py"
-      - "patch_summary_area_metrics.py"
-      - "patch_final_source_dates.py"
-      - "patch_final_chart_guard.py"
+      - "patch_*.py"
 
 concurrency:
   group: gpmb3-dashboard-update
@@ -59,29 +31,17 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Sửa bộ đọc mảng projects nếu cấu trúc HTML thay đổi
+      - name: Chuẩn hóa bộ đọc dữ liệu dashboard
         run: |
           python - <<'PY'
           from pathlib import Path
-          old = '''def extract_projects(html: str) -> list[dict]:
-              m = re.search(r"const projects = (\[[\s\S]*?\n\s*\]);\n\n\s*const dataUpdatedDate", html)
-              if not m:
-                  raise SystemExit("Không tìm thấy mảng projects trong index.html")
-              return json.loads(m.group(1))
+          import re
 
-
-          def replace_projects(html: str, projects: list[dict], data_date: str) -> str:
-              payload = json.dumps(projects, ensure_ascii=False, indent=6)
-              projects_block = "    const projects = " + "\n    ".join(payload.splitlines()) + ";\n\n    const dataUpdatedDate"
-              html = re.sub(
-                  r"    const projects = \[[\s\S]*?\n\s*\];\n\n    const dataUpdatedDate",
-                  lambda _m: projects_block,
-                  html,
-              )
-              html = re.sub(r'const dataUpdatedDate = "[^"]+";', f'const dataUpdatedDate = "{data_date}";', html)
-              return html
-          '''
-          new = '''def locate_projects_block(html: str) -> tuple[int, int, str]:
+          path = Path("update_dashboard_from_drive.py")
+          text = path.read_text(encoding="utf-8")
+          if "def locate_projects_block(html: str)" not in text:
+              replacement = r'''def locate_projects_block(html: str) -> tuple[int, int, str]:
+              """Find the JS projects array without depending on nearby constants."""
               marker = "const projects ="
               marker_start = html.find(marker)
               if marker_start < 0:
@@ -89,6 +49,7 @@ jobs:
               array_start = html.find("[", marker_start)
               if array_start < 0:
                   raise SystemExit("Không tìm thấy điểm bắt đầu mảng projects trong index.html")
+
               depth = 0
               quote = None
               escaped = False
@@ -132,16 +93,21 @@ jobs:
               html = re.sub(r'const dataUpdatedDate = "[^"]+";', f'const dataUpdatedDate = "{data_date}";', html)
               return html
           '''
-          path = Path("update_dashboard_from_drive.py")
-          text = path.read_text(encoding="utf-8")
-          if old in text:
-              path.write_text(text.replace(old, new), encoding="utf-8")
-              print("Đã sửa bộ đọc mảng projects.")
-          elif "def locate_projects_block(html: str)" in text:
-              print("Bộ đọc mảng projects đã ổn.")
+              text, count = re.subn(
+                  r"def extract_projects\(html: str\) -> list\[dict\]:\n.*?(?=\ndef block_for\(lines: list\[str\])",
+                  replacement + "\n\n",
+                  text,
+                  count=1,
+                  flags=re.S,
+              )
+              if count != 1:
+                  raise SystemExit("Không tìm được vị trí thay bộ đọc mảng projects.")
+              path.write_text(text, encoding="utf-8")
+              print("Đã chuẩn hóa bộ đọc mảng projects.")
           else:
-              raise SystemExit("Không tìm được vị trí sửa bộ đọc mảng projects.")
+              print("Bộ đọc mảng projects đã ổn.")
           PY
+          python -m py_compile update_dashboard_from_drive.py
 
       - name: Lưu số liệu đang công khai để đối chiếu
         run: cp index.html index-before-update.html
@@ -149,95 +115,33 @@ jobs:
       - name: Cập nhật dashboard từ Google Drive
         run: python update_dashboard_from_drive.py --index index.html
 
-      - name: Rà soát tỷ lệ GPMB
-        run: python patch_progress_safety.py --index index.html
-
-      - name: Chặn lùi tiến độ nếu nguồn nhập thấp hơn số đã công khai
-        run: python patch_progress_regression_guard.py --index index.html --baseline index-before-update.html
-
-      - name: Chuẩn hóa biểu đồ CT.02
-        run: python patch_ct02_chart.py --index index.html
-
-      - name: Sửa tỷ lệ dự án 1 và thêm biểu đồ địa phương
-        run: python patch_locality_chart.py --index index.html
-
-      - name: Tính tỷ lệ địa phương từ diện tích đã bàn giao
-        run: python patch_locality_ratio_calc.py --index index.html
-
-      - name: Tối ưu hiển thị biểu đồ địa phương
-        run: python patch_locality_mobile_css.py --index index.html
-
-      - name: Làm nổi bật tỷ lệ tổng trong biểu đồ địa phương
-        run: python patch_locality_percent_style.py --index index.html
-
-      - name: Sửa nguyên nhân 0% và tỷ lệ địa phương
-        run: python patch_chart_zero_and_locality_average.py --index index.html
-
-      - name: Chuẩn hóa đơn vị mét dự án 1
-        run: python patch_project1_units.py --index index.html
-
-      - name: Bỏ qua vá lịch sử 24/7 để không ghi đè dữ liệu mới
-        run: python patch_latest_20260724_progress.py --index index.html
-
-      - name: Bổ sung diễn biến tiến độ 07 ngày
-        run: python patch_weekly_progress_delta.py --index index.html
-
-      - name: Bổ sung diễn biến tuần qua cho biểu đồ dự án
-        run: python patch_weekly_project_chart.py --index index.html
-
-      - name: Bổ sung khối lượng tăng giảm tuần qua
-        run: python patch_weekly_area_delta.py --index index.html
-
-      - name: Căn giữa và tăng cỡ chữ biểu đồ
-        run: python patch_chart_readability.py --index index.html
-
-      - name: Cập nhật tóm tắt sơ kết và cách tính cơ cấu tiến độ
-        run: python patch_summary_context.py --index index.html
-
-      - name: Cập nhật theo báo cáo chung Tổ 3 ngày 08/08
-        run: python patch_20260808_report.py --index index.html
-
-      - name: Bổ sung TB 378 và ngày hiện tại của chiến dịch
-        run: python patch_tb378_current_day.py --index index.html
-
-      - name: Làm nổi bật mốc hiện nay trong khung 45 ngày
-        run: python patch_current_timeline.py --index index.html
-
-      - name: Tự cân chiều cao biểu đồ trên điện thoại
-        run: python patch_mobile_chart_scaling.py --index index.html
-
-      - name: Thu gọn khoảng cách biểu đồ desktop
-        run: python patch_compact_desktop_charts.py --index index.html
-
-      - name: Bổ sung link nguồn Google Drive
-        run: python patch_source_link.py --index index.html
-
-      - name: Kiểm tra lần cuối chống lùi tiến độ sau các bước chuẩn hóa
-        run: python patch_progress_regression_guard.py --index index.html --baseline index-before-update.html
-
-      - name: Cập nhật mốc so sánh tuần qua theo tuần trước
-        run: python patch_actual_weekly_baseline.py --index index.html
-
-      - name: Tạm ẩn nhãn tuần qua
-        run: python patch_hide_weekly_delta.py --index index.html
-
-      - name: Hiển thị mức tăng so với trước chiến dịch
-        run: python patch_campaign_delta_charts.py --index index.html
-
-      - name: Chốt nhãn tăng so với trước chiến dịch
-        run: python patch_campaign_delta_labels.py --index index.html
-
-      - name: Bổ sung nhãn tổng hợp khối lượng GPMB
-        run: python patch_summary_area_metrics.py --index index.html
-
-      - name: Khóa ngày nguồn hiển thị cuối cùng
-        run: python patch_final_source_dates.py --index index.html
-
-      - name: Chốt TB 378 và ngày hiện tại sau bước khóa ngày nguồn
-        run: python patch_tb378_current_day.py --index index.html
-
-      - name: Chốt lỗi biểu đồ và thứ tự đơn vị trước khi xuất bản
-        run: python patch_final_chart_guard.py --index index.html
+      - name: Rà soát và chuẩn hóa dashboard
+        run: |
+          python patch_progress_safety.py --index index.html
+          python patch_progress_regression_guard.py --index index.html --baseline index-before-update.html
+          python patch_ct02_chart.py --index index.html
+          python patch_locality_chart.py --index index.html
+          python patch_locality_ratio_calc.py --index index.html
+          python patch_locality_mobile_css.py --index index.html
+          python patch_locality_percent_style.py --index index.html
+          python patch_chart_zero_and_locality_average.py --index index.html
+          python patch_project1_units.py --index index.html
+          python patch_chart_readability.py --index index.html
+          python patch_summary_context.py --index index.html
+          python patch_20260808_report.py --index index.html
+          python patch_tb378_current_day.py --index index.html
+          python patch_current_timeline.py --index index.html
+          python patch_mobile_chart_scaling.py --index index.html
+          python patch_compact_desktop_charts.py --index index.html
+          python patch_source_link.py --index index.html
+          python patch_progress_regression_guard.py --index index.html --baseline index-before-update.html
+          python patch_hide_weekly_delta.py --index index.html
+          python patch_campaign_delta_charts.py --index index.html
+          python patch_campaign_delta_labels.py --index index.html
+          python patch_summary_area_metrics.py --index index.html
+          python patch_final_source_dates.py --index index.html
+          python patch_tb378_current_day.py --index index.html
+          python patch_final_chart_guard.py --index index.html
 
       - name: Khóa cách tính biểu đồ xã phường
         run: |
