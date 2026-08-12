@@ -28,6 +28,7 @@ on:
       - "patch_chart_readability.py"
       - "patch_summary_context.py"
       - "patch_20260808_report.py"
+      - "patch_tb378_current_day.py"
       - "patch_mobile_chart_scaling.py"
       - "patch_compact_desktop_charts.py"
       - "patch_source_link.py"
@@ -109,6 +110,9 @@ jobs:
 
       - name: Cập nhật theo báo cáo chung Tổ 3 ngày 08/08
         run: python patch_20260808_report.py --index index.html
+
+      - name: Bổ sung TB 378 và ngày hiện tại của chiến dịch
+        run: python patch_tb378_current_day.py --index index.html
 
       - name: Làm nổi bật mốc hiện nay trong khung 45 ngày
         run: python patch_current_timeline.py --index index.html
