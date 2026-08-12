@@ -88,14 +88,30 @@ def patch_final_chart_guard(html: str) -> str:
       return Math.max(0, Math.min(100, cleared / total * 100));
     }
 
-    function parseLocalityAreaParts(clearedText) {
+    function parseLocalityAreaParts(clearedText, remainingText = "", fallbackUnit = "") {
       const match = String(clearedText || "").match(/([\\d.,]+)\\s*\\/\\s*([\\d.,]+)\\s*([a-zA-Z]*)/);
-      if (!match) return null;
-      const unit = (match[3] || "").toLowerCase();
-      const cleared = readLocalityNumber(match[1], unit);
-      const total = readLocalityNumber(match[2], unit);
+      const fallbackMatch = String(fallbackUnit || "").match(/\\b(ha|km|m)\\b/i);
+      if (match) {
+        const unit = (match[3] || fallbackMatch?.[1] || "").toLowerCase();
+        const cleared = readLocalityNumber(match[1], unit);
+        const total = readLocalityNumber(match[2], unit);
+        if (!Number.isFinite(cleared) || !Number.isFinite(total) || total <= 0) return null;
+        return { cleared, total, unit };
+      }
+      const clearedMatch = String(clearedText || "").match(/([\\d.,]+)\\s*([a-zA-Z]*)/);
+      const remainingMatch = String(remainingText || "").match(/([\\d.,]+)\\s*([a-zA-Z]*)/);
+      if (!clearedMatch || !remainingMatch) return null;
+      const unit = (clearedMatch[2] || remainingMatch[2] || fallbackMatch?.[1] || "").toLowerCase();
+      const cleared = readLocalityNumber(clearedMatch[1], unit);
+      const remaining = readLocalityNumber(remainingMatch[1], unit);
+      const total = cleared + remaining;
       if (!Number.isFinite(cleared) || !Number.isFinite(total) || total <= 0) return null;
       return { cleared, total, unit };
+    }
+
+    function formatLocalityAreaParts(parts) {
+      if (!parts) return "";
+      return `${formatAreaValue(parts.cleared)}/${formatAreaValue(parts.total)} ${parts.unit}`.trim();
     }
 
     function weightedLocalityProgress(rows) {
@@ -114,8 +130,111 @@ def patch_final_chart_guard(html: str) -> str:
             1,
         )
     html = html.replace(
-        "            progress: Math.max(0, Math.min(100, progress)),\n            cleared: compactLocalityArea(match[2])",
-        "            progress: Math.max(0, Math.min(100, progress)),\n            cleared: compactLocalityArea(match[2]),\n            areaParts: parseLocalityAreaParts(match[2])",
+        """    function parseLocalityAreaParts(clearedText) {
+      const match = String(clearedText || "").match(/([\\d.,]+)\\s*\\/\\s*([\\d.,]+)\\s*([a-zA-Z]*)/);
+      if (!match) return null;
+      const unit = (match[3] || "").toLowerCase();
+      const cleared = readLocalityNumber(match[1], unit);
+      const total = readLocalityNumber(match[2], unit);
+      if (!Number.isFinite(cleared) || !Number.isFinite(total) || total <= 0) return null;
+      return { cleared, total, unit };
+    }
+""",
+        """    function parseLocalityAreaParts(clearedText, remainingText = "", fallbackUnit = "") {
+      const match = String(clearedText || "").match(/([\\d.,]+)\\s*\\/\\s*([\\d.,]+)\\s*([a-zA-Z]*)/);
+      const fallbackMatch = String(fallbackUnit || "").match(/\\b(ha|km|m)\\b/i);
+      if (match) {
+        const unit = (match[3] || fallbackMatch?.[1] || "").toLowerCase();
+        const cleared = readLocalityNumber(match[1], unit);
+        const total = readLocalityNumber(match[2], unit);
+        if (!Number.isFinite(cleared) || !Number.isFinite(total) || total <= 0) return null;
+        return { cleared, total, unit };
+      }
+      const clearedMatch = String(clearedText || "").match(/([\\d.,]+)\\s*([a-zA-Z]*)/);
+      const remainingMatch = String(remainingText || "").match(/([\\d.,]+)\\s*([a-zA-Z]*)/);
+      if (!clearedMatch || !remainingMatch) return null;
+      const unit = (clearedMatch[2] || remainingMatch[2] || fallbackMatch?.[1] || "").toLowerCase();
+      const cleared = readLocalityNumber(clearedMatch[1], unit);
+      const remaining = readLocalityNumber(remainingMatch[1], unit);
+      const total = cleared + remaining;
+      if (!Number.isFinite(cleared) || !Number.isFinite(total) || total <= 0) return null;
+      return { cleared, total, unit };
+    }
+
+    function formatLocalityAreaParts(parts) {
+      if (!parts) return "";
+      return `${formatAreaValue(parts.cleared)}/${formatAreaValue(parts.total)} ${parts.unit}`.trim();
+    }
+""",
+    )
+    html = html.replace(
+        "          const row = {\n"
+        "            locality,\n"
+        "            projectName,\n"
+        "            progress: Math.max(0, Math.min(100, progress)),\n"
+        "            cleared: compactLocalityArea(match[2]),\n"
+        "            areaParts: parseLocalityAreaParts(match[2])\n"
+        "          };",
+        "          const areaParts = parseLocalityAreaParts(match[2], match[4], `${project.totalArea || \"\"} ${project.clearedArea || \"\"}`);\n"
+        "          const row = {\n"
+        "            locality,\n"
+        "            projectName,\n"
+        "            progress: Math.max(0, Math.min(100, progress)),\n"
+        "            cleared: compactLocalityArea(match[2]) || formatLocalityAreaParts(areaParts),\n"
+        "            areaParts\n"
+        "          };",
+    )
+    html = html.replace(
+        "            cleared: compactLocalityArea(match[2]),\n"
+        "            areaParts: parseLocalityAreaParts(match[2]) || formatLocalityAreaParts(areaParts),\n"
+        "            areaParts",
+        "            cleared: compactLocalityArea(match[2]) || formatLocalityAreaParts(areaParts),\n"
+        "            areaParts",
+    )
+    html = html.replace(
+        "          const sourceProgress = parseFloat(String(match[3]).replace(\",\", \".\"));\n"
+        "          const calculatedProgress = calculateLocalityProgress(match[2]);\n"
+        "          const progress = Number.isFinite(sourceProgress) ? sourceProgress : calculatedProgress;\n"
+        "          if (!locality || !Number.isFinite(progress)) continue;\n"
+        "          const projectName = compactLocalityProjectName(project.name);\n"
+        "          const key = `${locality}::${projectName}`;\n"
+        "          const row = {\n"
+        "            locality,\n"
+        "            projectName,\n"
+        "            progress: Math.max(0, Math.min(100, progress)),\n"
+        "            cleared: compactLocalityArea(match[2]),\n"
+        "            areaParts: parseLocalityAreaParts(match[2])\n"
+        "          };",
+        "          const projectName = compactLocalityProjectName(project.name);\n"
+        "          const key = `${locality}::${projectName}`;\n"
+        "          const areaParts = parseLocalityAreaParts(match[2], match[4], `${project.totalArea || \"\"} ${project.clearedArea || \"\"}`);\n"
+        "          const sourceProgress = parseFloat(String(match[3]).replace(\",\", \".\"));\n"
+        "          const calculatedProgress = areaParts ? areaParts.cleared / areaParts.total * 100 : calculateLocalityProgress(match[2]);\n"
+        "          const progress = Number.isFinite(calculatedProgress) ? calculatedProgress : sourceProgress;\n"
+        "          if (!locality || !Number.isFinite(progress)) continue;\n"
+        "          const row = {\n"
+        "            locality,\n"
+        "            projectName,\n"
+        "            progress: Math.max(0, Math.min(100, progress)),\n"
+        "            cleared: compactLocalityArea(match[2]) || formatLocalityAreaParts(areaParts),\n"
+        "            areaParts\n"
+        "          };",
+    )
+    html = html.replace(
+        "          const sourceProgress = parseFloat(String(match[3]).replace(\",\", \".\"));\n"
+        "          const calculatedProgress = calculateLocalityProgress(match[2]);\n"
+        "          const progress = Number.isFinite(sourceProgress) ? sourceProgress : calculatedProgress;\n"
+        "          if (!locality || !Number.isFinite(progress)) continue;\n"
+        "          const projectName = compactLocalityProjectName(project.name);\n"
+        "          const key = `${locality}::${projectName}`;\n"
+        "          const areaParts = parseLocalityAreaParts(match[2], match[4], `${project.totalArea || \"\"} ${project.clearedArea || \"\"}`);\n",
+        "          const projectName = compactLocalityProjectName(project.name);\n"
+        "          const key = `${locality}::${projectName}`;\n"
+        "          const areaParts = parseLocalityAreaParts(match[2], match[4], `${project.totalArea || \"\"} ${project.clearedArea || \"\"}`);\n"
+        "          const sourceProgress = parseFloat(String(match[3]).replace(\",\", \".\"));\n"
+        "          const calculatedProgress = areaParts ? areaParts.cleared / areaParts.total * 100 : calculateLocalityProgress(match[2]);\n"
+        "          const progress = Number.isFinite(calculatedProgress) ? calculatedProgress : sourceProgress;\n"
+        "          if (!locality || !Number.isFinite(progress)) continue;\n",
     )
     html = html.replace(
         "        const avg = rowsForAverage.reduce((sum, row) => sum + row.progress, 0) / rowsForAverage.length;\n        return { locality, rows, rowsForAverage, progress: Math.max(0, Math.min(100, avg)) };",
@@ -218,11 +337,11 @@ def patch_final_chart_guard(html: str) -> str:
 
     const campaignLocalityDelta = {
       "xã Ô Loan": { text: "không thay đổi (0 km)", color: colors.weekFlat },
-      "xã Tuy An Nam": { text: "tăng 2,2% (0,1 km)", color: colors.weekUp },
+      "xã Tuy An Nam": { text: "tăng 2,17% (0,1 km)", color: colors.weekUp },
       "phường Bình Kiến": { text: "tăng 11,97% (0,2741 km; 0,7939 ha)", color: colors.weekUp },
       "phường Phú Yên": { text: "tăng 22,09% (8,48 ha)", color: colors.weekUp },
-      "xã Tuy An Đông": { text: "tăng 4% (0,6 km)", color: colors.weekUp },
-      "xã Hòa Xuân": { text: "tăng 7,63% (69,8255 ha)", color: colors.weekUp }
+      "xã Tuy An Đông": { text: "tăng 7,81% (0,6 km)", color: colors.weekUp },
+      "xã Hòa Xuân": { text: "tăng 13,10% (69,8255 ha)", color: colors.weekUp }
     };
 
     function campaignProgressMeta(current, areaText = "") {
