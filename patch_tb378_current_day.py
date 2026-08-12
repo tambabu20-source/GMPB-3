@@ -195,6 +195,35 @@ def patch_summary_and_sources(html: str, today: date) -> str:
     return html
 
 
+def patch_final_chart_guard(html: str) -> str:
+    html = html.replace("So với trước chiến dịch", "So trước chiến dịch")
+    html = html.replace("So trước CĐ", "So trước chiến dịch")
+    html = html.replace(
+        "        const campaign = localityCampaignMeta(item.locality);\n",
+        "        const campaign = localityCampaignMeta(item.locality, item.progress, item.rowsForAverage);\n",
+    )
+    html = html.replace(
+        '        const campaignLine = campaign ? oneLineText(compactCampaignLabel(campaign.label), isMobile ? 58 : 118) : "";\n'
+        "        const week = weeklyProgressMeta(\n",
+        '        const campaignLine = campaign ? oneLineText(compactCampaignLabel(campaign.label), isMobile ? 58 : 118) : "";\n'
+        "        const campaignLines = campaignLine ? [campaignLine] : [];\n"
+        "        const week = weeklyProgressMeta(\n",
+    )
+    html = html.replace(
+        "Tổng diện tích/chiều dài phải GPMB 7 dự án</span>\n              <b>29,62 km + 578,25 ha</b>",
+        "Tổng diện tích/chiều dài phải GPMB 7 dự án</span>\n              <b>578,25 ha + 29,62 km</b>",
+    )
+    html = html.replace(
+        "Tổng diện tích/chiều dài đã GPMB đến nay 7 dự án</span>\n              <b>28,18 km + 381,77 ha</b>",
+        "Tổng diện tích/chiều dài đã GPMB đến nay 7 dự án</span>\n              <b>381,77 ha + 28,18 km</b>",
+    )
+    html = html.replace(
+        "Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>\n              <b>1,00 km + 77,21 ha</b>",
+        "Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>\n              <b>77,21 ha + 1,00 km</b>",
+    )
+    return html
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--index", default="outputs/dashboard-to-cong-tac-so-3-gpmb.html")
@@ -207,6 +236,7 @@ def main() -> int:
     html = patch_projects(html)
     html = patch_current_day(html, today)
     html = patch_summary_and_sources(html, today)
+    html = patch_final_chart_guard(html)
     path.write_text(html, encoding="utf-8")
     print("Đã cập nhật TB 378/TB-UBND và ngày hiện tại của chiến dịch.")
     return 0
