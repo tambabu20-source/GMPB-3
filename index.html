@@ -1642,8 +1642,8 @@
       "xã Tuy An Nam": { text: "tăng 2,17% (0,1 km)", color: colors.weekUp },
       "phường Bình Kiến": { text: "tăng 11,97% (0,2741 km; 0,7939 ha)", color: colors.weekUp },
       "phường Phú Yên": { text: "tăng 22,09% (8,48 ha)", color: colors.weekUp },
-      "xã Tuy An Đông": { text: "tăng 7,81% (0,6 km)", color: colors.weekUp },
-      "xã Hòa Xuân": { text: "tăng 13,10% (69,8255 ha)", color: colors.weekUp }
+      "xã Tuy An Đông": { text: "tăng 4% (0,6 km)", color: colors.weekUp },
+      "xã Hòa Xuân": { text: "tăng 26,55% (69,8255 ha)", color: colors.weekUp }
     };
 
     function campaignProgressMeta(current, areaText = "") {
@@ -1701,9 +1701,9 @@
 
     function compactCampaignLabel(label) {
       return String(label || "")
-        .replace(/^So với trước chiến dịch\s+/i, "So trước chiến dịch ")
         .replace(/^So trước chiến dịch\s+/i, "So trước chiến dịch ")
-        .replace(/^So trước CĐ\s+/i, "So trước chiến dịch ")
+        .replace(/^So trước chiến dịch\s+/i, "So trước chiến dịch ")
+        .replace(/^So trước chiến dịch\s+/i, "So trước chiến dịch ")
         .replace(/không thay đổi/i, "không đổi")
         .replace(/\s+/g, " ")
         .trim();
@@ -2094,13 +2094,7 @@
     function weightedLocalityProgress(rows) {
       const usable = rows.filter(row => row.progress > 0);
       const basis = usable.length ? usable : rows;
-      const areaRows = basis.map(row => row.areaParts).filter(Boolean);
-      const units = new Set(areaRows.map(row => row.unit));
-      if (areaRows.length === basis.length && units.size === 1) {
-        const cleared = areaRows.reduce((sum, row) => sum + row.cleared, 0);
-        const total = areaRows.reduce((sum, row) => sum + row.total, 0);
-        if (total > 0) return Math.max(0, Math.min(100, cleared / total * 100));
-      }
+      if (!basis.length) return 0;
       return basis.reduce((sum, row) => sum + row.progress, 0) / basis.length;
     }
 
