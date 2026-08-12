@@ -10,7 +10,6 @@ on:
       - ".github/workflows/daily-gpmb3-update.yml"
       - "workflow-trigger.txt"
       - "index.html"
-      - "patch_*.py"
 
 concurrency:
   group: gpmb3-dashboard-update
@@ -31,68 +30,69 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Chốt số liệu và cách tính dashboard
-        run: |
-          python patch_progress_safety.py --index index.html
-          python patch_ct02_chart.py --index index.html
-          python patch_locality_chart.py --index index.html
-          python patch_locality_ratio_calc.py --index index.html
-          python patch_locality_mobile_css.py --index index.html
-          python patch_locality_percent_style.py --index index.html
-          python patch_chart_zero_and_locality_average.py --index index.html
-          python patch_project1_units.py --index index.html
-          python patch_chart_readability.py --index index.html
-          python patch_summary_context.py --index index.html
-          python patch_20260808_report.py --index index.html
-          python patch_tb378_current_day.py --index index.html
-          python patch_current_timeline.py --index index.html
-          python patch_mobile_chart_scaling.py --index index.html
-          python patch_compact_desktop_charts.py --index index.html
-          python patch_source_link.py --index index.html
-          python patch_hide_weekly_delta.py --index index.html
-          python patch_campaign_delta_charts.py --index index.html
-          python patch_campaign_delta_labels.py --index index.html
-          python patch_summary_area_metrics.py --index index.html
-          python patch_final_source_dates.py --index index.html
-          python patch_tb378_current_day.py --index index.html
-          python patch_final_chart_guard.py --index index.html
-
-      - name: Khóa cách tính biểu đồ xã phường và đối chiếu số
+      - name: Chốt số liệu, công thức và nhãn dashboard
         run: |
           python - <<'PY'
           from pathlib import Path
           import re
+
           path = Path("index.html")
           text = path.read_text(encoding="utf-8")
-          replacement = '''    function weightedLocalityProgress(rows) {
-                const usable = rows.filter(row => row.progress > 0);
-                const basis = usable.length ? usable : rows;
-                if (!basis.length) return 0;
-                return basis.reduce((sum, row) => sum + row.progress, 0) / basis.length;
-              }
-          '''
+
+          replacements = {
+              "So với trước chiến dịch": "So trước chiến dịch",
+              "So trước CĐ": "So trước chiến dịch",
+              '"xã Tuy An Đông": { text: "tăng 7,81% (0,6 km)", color: colors.weekUp }': '"xã Tuy An Đông": { text: "tăng 4% (0,6 km)", color: colors.weekUp }',
+              '"xã Hòa Xuân": { text: "tăng 13,10% (69,8255 ha)", color: colors.weekUp }': '"xã Hòa Xuân": { text: "tăng 26,55% (69,8255 ha)", color: colors.weekUp }',
+              '"xã Hòa Xuân": { text: "tăng 13,1% (69,8255 ha)", color: colors.weekUp }': '"xã Hòa Xuân": { text: "tăng 26,55% (69,8255 ha)", color: colors.weekUp }',
+              "578,25 ha + 29,62 km": "578,25 ha + 25,55 km",
+              "29,62 km + 578,25 ha": "578,25 ha + 25,55 km",
+              "381,77 ha + 28,18 km": "381,77 ha + 20,89 km",
+              "28,18 km + 381,77 ha": "381,77 ha + 20,89 km",
+              "79,57 ha + 0,99 km": "79,10 ha + 0,99 km",
+              "77,21 ha + 1,00 km": "79,10 ha + 0,99 km",
+              "1,00 km + 77,21 ha": "79,10 ha + 0,99 km",
+          }
+          for old, new in replacements.items():
+              text = text.replace(old, new)
+
           text, count = re.subn(
               r"    function weightedLocalityProgress\(rows\) \{\n.*?\n    \}\n\n    function normalizeLocalityName",
-              replacement + "\n    function normalizeLocalityName",
+              """    function weightedLocalityProgress(rows) {
+      const usable = rows.filter(row => row.progress > 0);
+      const basis = usable.length ? usable : rows;
+      if (!basis.length) return 0;
+      return basis.reduce((sum, row) => sum + row.progress, 0) / basis.length;
+    }
+
+    function normalizeLocalityName""",
               text,
               count=1,
               flags=re.S,
           )
           if count != 1:
               raise SystemExit("Không tìm thấy hàm weightedLocalityProgress để khóa cách tính xã/phường")
-          checks = {
-              "Phú Yên": "91,98%",
-              "Hòa Xuân": "80,39%",
-              "Tuy An Đông": "98,73%",
+
+          required = {
+              "Phú Yên nguồn 1": "90.06168609",
+              "Phú Yên nguồn 2": "93.90500210",
+              "Tuy An Đông delta": '"xã Tuy An Đông": { text: "tăng 4% (0,6 km)", color: colors.weekUp }',
+              "Hòa Xuân delta": '"xã Hòa Xuân": { text: "tăng 26,55% (69,8255 ha)", color: colors.weekUp }',
               "Tổng phải GPMB": "578,25 ha + 25,55 km",
               "Tổng đã GPMB": "381,77 ha + 20,89 km",
               "Tổng trong chiến dịch": "79,10 ha + 0,99 km",
+              "Ẩn tuần qua": "const showWeeklyDelta = false;",
           }
-          missing = [label for label, value in checks.items() if value not in text]
+          missing = [name for name, needle in required.items() if needle not in text]
           if missing:
-              raise SystemExit("Số liệu chưa khớp: " + ", ".join(missing))
+              raise SystemExit("Thiếu/chưa khớp: " + ", ".join(missing))
+
+          bad = [needle for needle in ["So với trước chiến dịch", "So trước CĐ"] if needle in text]
+          if bad:
+              raise SystemExit("Còn cụm sai: " + ", ".join(bad))
+
           path.write_text(text, encoding="utf-8")
-          print("Đã khóa cách tính và đối chiếu số liệu chính.")
+          print("Đã chốt số liệu và công thức dashboard.")
           PY
 
       - name: Commit nếu có thay đổi
