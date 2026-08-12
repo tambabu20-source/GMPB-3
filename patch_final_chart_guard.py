@@ -56,6 +56,8 @@ def patch_final_chart_guard(html: str) -> str:
     )
     html = html.replace("Hạ tầng kỹ thuật khu dân cư phía Nam đạt 95,38%", "Hạ tầng kỹ thuật khu dân cư phía Nam đạt 93,91%")
     html = html.replace("Khu công viên trung tâm đạt 90,88%", "Khu công viên trung tâm đạt 90,06%")
+    html = html.replace("Hạ tầng kỹ thuật khu dân cư phía Nam đạt 95,38%", "Hạ tầng kỹ thuật khu dân cư phía Nam đạt 93,91%")
+    html = html.replace("Khu công viên trung tâm đạt 90,88%", "Khu công viên trung tâm đạt 90,06%")
     html = html.replace(
         '<div class="mini-metric"><span>Bình quân 7 dự án có tiến độ</span><b>89,67%</b></div>',
         '<div class="mini-metric"><span>Bình quân 7 dự án có tiến độ</span><b>89,35%</b></div>',
@@ -293,6 +295,10 @@ def patch_final_chart_guard(html: str) -> str:
         "Tổng diện tích/chiều dài đã GPMB đến nay 7 dự án</span>\n              <b>381,77 ha + 20,89 km</b>",
     )
     html = html.replace(
+        "Tổng diện tích/chiều dài đã GPMB đến nay 7 dự án</span>\n              <b>382,24 ha + 20,89 km</b>",
+        "Tổng diện tích/chiều dài đã GPMB đến nay 7 dự án</span>\n              <b>381,77 ha + 20,89 km</b>",
+    )
+    html = html.replace(
         "Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>\n              <b>1,00 km + 77,21 ha</b>",
         "Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>\n              <b>79,10 ha + 0,99 km</b>",
     )
@@ -306,6 +312,10 @@ def patch_final_chart_guard(html: str) -> str:
     )
     html = html.replace(
         "Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>\n              <b>79,57 ha + 1,00 km</b>",
+        "Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>\n              <b>79,10 ha + 0,99 km</b>",
+    )
+    html = html.replace(
+        "Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>\n              <b>79,57 ha + 0,99 km</b>",
         "Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>\n              <b>79,10 ha + 0,99 km</b>",
     )
     return html
