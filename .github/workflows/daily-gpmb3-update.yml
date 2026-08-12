@@ -38,6 +38,7 @@ on:
       - "patch_campaign_delta_labels.py"
       - "patch_summary_area_metrics.py"
       - "patch_final_source_dates.py"
+      - "patch_final_chart_guard.py"
 
 concurrency:
   group: gpmb3-dashboard-update
@@ -150,6 +151,9 @@ jobs:
 
       - name: Chốt TB 378 và ngày hiện tại sau bước khóa ngày nguồn
         run: python patch_tb378_current_day.py --index index.html
+
+      - name: Chốt lỗi biểu đồ và thứ tự đơn vị trước khi xuất bản
+        run: python patch_final_chart_guard.py --index index.html
 
       - name: Commit nếu có số liệu mới
         run: |
