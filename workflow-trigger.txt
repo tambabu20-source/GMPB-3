@@ -1,3 +1,3 @@
-Kích hoạt cập nhật dashboard GPMB Tổ công tác số 3: 2026-08-12 09:20 Asia/Ho_Chi_Minh
+Kích hoạt cập nhật dashboard GPMB Tổ công tác số 3: 2026-08-12 09:30 Asia/Ho_Chi_Minh
 Nguồn Drive chính: https://docs.google.com/spreadsheets/d/1MjJcE8f93HyrpNP1Ik6QBdpQIulJLd4y/edit?pli=1&gid=1092138269#gid=1092138269
 Yêu cầu: đồng bộ dashboard lên link GitHub Pages duy nhất https://tambabu20-source.github.io/GMPB-3/; giữ cách tính xã/phường theo trung bình các dự án có tiến độ dương, loại dự án 0% khi địa phương còn dự án dương; chốt Phú Yên 91,98%, Hòa Xuân 80,39%, Tuy An Đông 98,73%; tổng phải GPMB 578,25 ha + 25,55 km; tổng đã GPMB 381,77 ha + 20,89 km; tổng trong chiến dịch 79,10 ha + 0,99 km; ẩn nhãn tuần qua.
