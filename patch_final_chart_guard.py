@@ -9,42 +9,60 @@ def patch_final_chart_guard(html: str) -> str:
     html = html.replace("So với trước chiến dịch", "So trước chiến dịch")
     html = html.replace("So trước CĐ", "So trước chiến dịch")
     html = html.replace(
-        '"clearedArea": "13,14/14,59 ha",',
         '"clearedArea": "13,26/14,59 ha",',
+        '"clearedArea": "13,14/14,59 ha",',
+    )
+    html = html.replace(
+        '"clearedArea": "13,14/14,59 ha",',
+        '"clearedArea": "13,14/14,59 ha",',
+    )
+    html = html.replace(
+        '"remainingArea": "1,33 ha",\n            "remainingRate": "9,12%",',
+        '"remainingArea": "1,45 ha",\n            "remainingRate": "9,94%",',
+        1,
     )
     html = html.replace(
         '"remainingArea": "1,45 ha",\n            "remainingRate": "9,94%",',
-        '"remainingArea": "1,33 ha",\n            "remainingRate": "9,12%",',
+        '"remainingArea": "1,45 ha",\n            "remainingRate": "9,94%",',
         1,
     )
     html = html.replace(
-        '"progress": 90.06',
         '"progress": 90.88',
+        '"progress": 90.06',
         1,
+    )
+    html = html.replace(
+        '"clearedArea": "22,69/23,79 ha",',
+        '"clearedArea": "22,34/23,79 ha",',
     )
     html = html.replace(
         '"clearedArea": "22,34/23,79 ha",',
-        '"clearedArea": "22,69/23,79 ha",',
+        '"clearedArea": "22,34/23,79 ha",',
+    )
+    html = html.replace(
+        '"remainingArea": "1,10 ha",\n            "remainingRate": "4,62%",',
+        '"remainingArea": "1,45 ha",\n            "remainingRate": "6,09%",',
+        1,
     )
     html = html.replace(
         '"remainingArea": "1,45 ha",\n            "remainingRate": "6,09%",',
-        '"remainingArea": "1,10 ha",\n            "remainingRate": "4,62%",',
+        '"remainingArea": "1,45 ha",\n            "remainingRate": "6,09%",',
         1,
     )
     html = html.replace(
-        '"progress": 93.91',
         '"progress": 95.38',
+        '"progress": 93.91',
         1,
     )
-    html = html.replace("Hạ tầng kỹ thuật khu dân cư phía Nam đạt 93,91%", "Hạ tầng kỹ thuật khu dân cư phía Nam đạt 95,38%")
-    html = html.replace("Khu công viên trung tâm đạt 90,06%", "Khu công viên trung tâm đạt 90,88%")
+    html = html.replace("Hạ tầng kỹ thuật khu dân cư phía Nam đạt 95,38%", "Hạ tầng kỹ thuật khu dân cư phía Nam đạt 93,91%")
+    html = html.replace("Khu công viên trung tâm đạt 90,88%", "Khu công viên trung tâm đạt 90,06%")
     html = html.replace(
-        '<div class="mini-metric"><span>Bình quân 7 dự án có tiến độ</span><b>89,35%</b></div>',
         '<div class="mini-metric"><span>Bình quân 7 dự án có tiến độ</span><b>89,67%</b></div>',
+        '<div class="mini-metric"><span>Bình quân 7 dự án có tiến độ</span><b>89,35%</b></div>',
     )
     html = html.replace(
         '<div class="mini-metric"><span>Bình quân 7 dự án có tiến độ</span><b>89,58%</b></div>',
-        '<div class="mini-metric"><span>Bình quân 7 dự án có tiến độ</span><b>89,67%</b></div>',
+        '<div class="mini-metric"><span>Bình quân 7 dự án có tiến độ</span><b>89,35%</b></div>',
     )
     if "function weightedLocalityProgress(rows)" not in html:
         html = html.replace(
@@ -189,8 +207,8 @@ def patch_final_chart_guard(html: str) -> str:
       1: { text: "tăng 3,2% (0,4 km)", color: colors.weekUp },
       2: { text: "tăng 8% (0,6 km)", color: colors.weekUp },
       3: { text: "chưa phát sinh tăng (0 km)", color: colors.weekFlat },
-      4: { text: "tăng 15,9% (2,32 ha)", color: colors.weekUp },
-      5: { text: "tăng 27,87% (6,63 ha)", color: colors.weekUp },
+      4: { text: "tăng 15,08% (2,20 ha)", color: colors.weekUp },
+      5: { text: "tăng 26,40% (6,28 ha)", color: colors.weekUp },
       6: { text: "tăng 14% (69,3055 ha)", color: colors.weekUp },
       7: { text: "tăng 1,26% (0,52 ha)", color: colors.weekUp },
       8: { text: "tăng 11,4% (0,7939 ha)", color: colors.weekUp }
@@ -200,7 +218,7 @@ def patch_final_chart_guard(html: str) -> str:
       "xã Ô Loan": { text: "không thay đổi (0 km)", color: colors.weekFlat },
       "xã Tuy An Nam": { text: "tăng 2,2% (0,1 km)", color: colors.weekUp },
       "phường Bình Kiến": { text: "tăng 11,97% (0,2741 km; 0,7939 ha)", color: colors.weekUp },
-      "phường Phú Yên": { text: "tăng 23,32% (8,95 ha)", color: colors.weekUp },
+      "phường Phú Yên": { text: "tăng 22,09% (8,48 ha)", color: colors.weekUp },
       "xã Tuy An Đông": { text: "tăng 4% (0,6 km)", color: colors.weekUp },
       "xã Hòa Xuân": { text: "tăng 7,63% (69,8255 ha)", color: colors.weekUp }
     };
@@ -264,31 +282,31 @@ def patch_final_chart_guard(html: str) -> str:
     )
     html = html.replace(
         "Tổng diện tích/chiều dài đã GPMB đến nay 7 dự án</span>\n              <b>28,18 km + 381,77 ha</b>",
-        "Tổng diện tích/chiều dài đã GPMB đến nay 7 dự án</span>\n              <b>382,24 ha + 20,89 km</b>",
+        "Tổng diện tích/chiều dài đã GPMB đến nay 7 dự án</span>\n              <b>381,77 ha + 20,89 km</b>",
     )
     html = html.replace(
         "Tổng diện tích/chiều dài đã GPMB đến nay 7 dự án</span>\n              <b>381,77 ha + 28,18 km</b>",
-        "Tổng diện tích/chiều dài đã GPMB đến nay 7 dự án</span>\n              <b>382,24 ha + 20,89 km</b>",
+        "Tổng diện tích/chiều dài đã GPMB đến nay 7 dự án</span>\n              <b>381,77 ha + 20,89 km</b>",
     )
     html = html.replace(
         "Tổng diện tích/chiều dài đã GPMB đến nay 7 dự án</span>\n              <b>382,24 ha + 28,18 km</b>",
-        "Tổng diện tích/chiều dài đã GPMB đến nay 7 dự án</span>\n              <b>382,24 ha + 20,89 km</b>",
+        "Tổng diện tích/chiều dài đã GPMB đến nay 7 dự án</span>\n              <b>381,77 ha + 20,89 km</b>",
     )
     html = html.replace(
         "Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>\n              <b>1,00 km + 77,21 ha</b>",
-        "Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>\n              <b>79,57 ha + 0,99 km</b>",
+        "Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>\n              <b>79,10 ha + 0,99 km</b>",
     )
     html = html.replace(
         "Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>\n              <b>77,21 ha + 1,00 km</b>",
-        "Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>\n              <b>79,57 ha + 0,99 km</b>",
+        "Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>\n              <b>79,10 ha + 0,99 km</b>",
     )
     html = html.replace(
         "Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>\n              <b>77,68 ha + 1,00 km</b>",
-        "Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>\n              <b>79,57 ha + 0,99 km</b>",
+        "Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>\n              <b>79,10 ha + 0,99 km</b>",
     )
     html = html.replace(
         "Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>\n              <b>79,57 ha + 1,00 km</b>",
-        "Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>\n              <b>79,57 ha + 0,99 km</b>",
+        "Tổng diện tích/chiều dài đã GPMB trong chiến dịch</span>\n              <b>79,10 ha + 0,99 km</b>",
     )
     return html
 
