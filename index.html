@@ -1666,11 +1666,11 @@
 
     const campaignLocalityDelta = {
       "xã Ô Loan": { text: "không thay đổi (0 km)", color: colors.weekFlat },
-      "xã Tuy An Nam": { text: "tăng 2,2% (0,1 km)", color: colors.weekUp },
+      "xã Tuy An Nam": { text: "tăng 2,17% (0,1 km)", color: colors.weekUp },
       "phường Bình Kiến": { text: "tăng 11,97% (0,2741 km; 0,7939 ha)", color: colors.weekUp },
       "phường Phú Yên": { text: "tăng 22,09% (8,48 ha)", color: colors.weekUp },
-      "xã Tuy An Đông": { text: "tăng 4% (0,6 km)", color: colors.weekUp },
-      "xã Hòa Xuân": { text: "tăng 7,63% (69,8255 ha)", color: colors.weekUp }
+      "xã Tuy An Đông": { text: "tăng 7,81% (0,6 km)", color: colors.weekUp },
+      "xã Hòa Xuân": { text: "tăng 13,10% (69,8255 ha)", color: colors.weekUp }
     };
 
     function campaignProgressMeta(current, areaText = "") {
@@ -2111,14 +2111,30 @@
       return Math.max(0, Math.min(100, cleared / total * 100));
     }
 
-    function parseLocalityAreaParts(clearedText) {
+    function parseLocalityAreaParts(clearedText, remainingText = "", fallbackUnit = "") {
       const match = String(clearedText || "").match(/([\d.,]+)\s*\/\s*([\d.,]+)\s*([a-zA-Z]*)/);
-      if (!match) return null;
-      const unit = (match[3] || "").toLowerCase();
-      const cleared = readLocalityNumber(match[1], unit);
-      const total = readLocalityNumber(match[2], unit);
+      const fallbackMatch = String(fallbackUnit || "").match(/\b(ha|km|m)\b/i);
+      if (match) {
+        const unit = (match[3] || fallbackMatch?.[1] || "").toLowerCase();
+        const cleared = readLocalityNumber(match[1], unit);
+        const total = readLocalityNumber(match[2], unit);
+        if (!Number.isFinite(cleared) || !Number.isFinite(total) || total <= 0) return null;
+        return { cleared, total, unit };
+      }
+      const clearedMatch = String(clearedText || "").match(/([\d.,]+)\s*([a-zA-Z]*)/);
+      const remainingMatch = String(remainingText || "").match(/([\d.,]+)\s*([a-zA-Z]*)/);
+      if (!clearedMatch || !remainingMatch) return null;
+      const unit = (clearedMatch[2] || remainingMatch[2] || fallbackMatch?.[1] || "").toLowerCase();
+      const cleared = readLocalityNumber(clearedMatch[1], unit);
+      const remaining = readLocalityNumber(remainingMatch[1], unit);
+      const total = cleared + remaining;
       if (!Number.isFinite(cleared) || !Number.isFinite(total) || total <= 0) return null;
       return { cleared, total, unit };
+    }
+
+    function formatLocalityAreaParts(parts) {
+      if (!parts) return "";
+      return `${formatAreaValue(parts.cleared)}/${formatAreaValue(parts.total)} ${parts.unit}`.trim();
     }
 
     function weightedLocalityProgress(rows) {
@@ -2175,8 +2191,7 @@
             locality,
             projectName,
             progress: Math.max(0, Math.min(100, progress)),
-            cleared: compactLocalityArea(match[2]),
-            areaParts: parseLocalityAreaParts(match[2])
+            cleared: compactLocalityArea(match[2])
           };
           const current = byKey.get(key);
           if (!current || row.progress > current.progress || (!current.cleared && row.cleared)) {
