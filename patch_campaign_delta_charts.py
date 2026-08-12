@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import re
 from pathlib import Path
 
 
@@ -61,26 +62,31 @@ campaign_helpers = helpers_after + """
       const suffix = areaText ? ` ${areaText}` : "";
       const color = safeCurrent > 0.05 ? colors.weekUp : colors.weekFlat;
       return {
-        label: `So với trước chiến dịch tăng ${formatPct(safeCurrent)}%${suffix}`,
+        label: `So trước chiến dịch tăng ${formatPct(safeCurrent)}%${suffix}`,
         color
       };
     }
 
     function projectCampaignMeta(project) {
       const delta = campaignProjectDelta[project.order];
-      if (delta) return { label: `So với trước chiến dịch ${delta.text}`, color: delta.color };
+      if (delta) return { label: `So trước chiến dịch ${delta.text}`, color: delta.color };
       return campaignProgressMeta(project.progress, campaignAreaTextFromCurrent(project.clearedArea));
     }
 
     function localityCampaignMeta(locality, current, rows) {
       const delta = campaignLocalityDelta[locality];
-      if (delta) return { label: `So với trước chiến dịch ${delta.text}`, color: delta.color };
+      if (delta) return { label: `So trước chiến dịch ${delta.text}`, color: delta.color };
       return campaignProgressMeta(current, campaignAreaTextByUnit(aggregateClearedByUnit(rows)));
     }
 """
 
 if "function campaignProgressMeta" not in html and helpers_after in html:
     html = html.replace(helpers_after, campaign_helpers)
+
+html = html.replace("So với 07/7", "So trước chiến dịch")
+html = html.replace("So với trước chiến dịch", "So trước chiến dịch")
+html = html.replace("So với trước CĐ", "So trước chiến dịch")
+html = html.replace("So trước CĐ", "So trước chiến dịch")
 
 html = html.replace(
     "        return { locality, rows, progress: Math.max(0, Math.min(100, avg)) };",
@@ -99,11 +105,26 @@ html = html.replace(
     "        const campaign = localityCampaignMeta(item.locality, item.progress, item.rowsForAverage);",
 )
 html = html.replace(
-    "          ? 134 + detailLines.length * 19 + Math.max(0, titleLines.length - 1) * 17\n"
-    "          : 66 + detailLines.length * 14 + Math.max(0, titleLines.length - 1) * 13;\n"
+    "        const campaign = localityCampaignMeta(item.locality);\n",
+    "        const campaign = localityCampaignMeta(item.locality, item.progress, item.rowsForAverage);\n",
+)
+html = html.replace(
+    '        const campaignLine = campaign ? oneLineText(compactCampaignLabel(campaign.label), isMobile ? 58 : 118) : "";\n'
+    '        const week = weeklyProgressMeta(',
+    '        const campaignLine = campaign ? oneLineText(compactCampaignLabel(campaign.label), isMobile ? 58 : 118) : "";\n'
+    '        const campaignLines = campaignLine ? [campaignLine] : [];\n'
+    '        const week = weeklyProgressMeta(',
+)
+html = html.replace(
+    "          ? 134 + detailLines.length * 19 + Math.max(0, titleLines.length - 1) * 17",
+    "          ? 134 + detailLines.length * 19 + campaignLines.length * 16 + Math.max(0, titleLines.length - 1) * 17",
+)
+html = html.replace(
+    "          : 66 + detailLines.length * 14 + Math.max(0, titleLines.length - 1) * 13;",
+    "          : 66 + detailLines.length * 14 + campaignLines.length * 13 + Math.max(0, titleLines.length - 1) * 13;",
+)
+html = html.replace(
     "        return { item, titleLines, detailLines, week, rowHeight };",
-    "          ? 134 + detailLines.length * 19 + campaignLines.length * 16 + Math.max(0, titleLines.length - 1) * 17\n"
-    "          : 66 + detailLines.length * 14 + campaignLines.length * 13 + Math.max(0, titleLines.length - 1) * 13;\n"
     "        return { item, titleLines, detailLines, campaign, campaignLines, week, rowHeight };",
 )
 html = html.replace(
