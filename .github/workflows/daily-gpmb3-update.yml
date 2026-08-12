@@ -40,62 +40,64 @@ jobs:
           path = Path("update_dashboard_from_drive.py")
           text = path.read_text(encoding="utf-8")
           if "def locate_projects_block(html: str)" not in text:
-              replacement = r'''def locate_projects_block(html: str) -> tuple[int, int, str]:
-              """Find the JS projects array without depending on nearby constants."""
-              marker = "const projects ="
-              marker_start = html.find(marker)
-              if marker_start < 0:
-                  raise SystemExit("Không tìm thấy mảng projects trong index.html")
-              array_start = html.find("[", marker_start)
-              if array_start < 0:
-                  raise SystemExit("Không tìm thấy điểm bắt đầu mảng projects trong index.html")
-
-              depth = 0
-              quote = None
-              escaped = False
-              for pos in range(array_start, len(html)):
-                  char = html[pos]
-                  if quote:
-                      if escaped:
-                          escaped = False
-                      elif char == chr(92):
-                          escaped = True
-                      elif char == quote:
-                          quote = None
-                      continue
-                  if char in ('"', "'"):
-                      quote = char
-                  elif char == "[":
-                      depth += 1
-                  elif char == "]":
-                      depth -= 1
-                      if depth == 0:
-                          array_end = pos + 1
-                          semicolon = html.find(";", array_end)
-                          if semicolon < 0:
-                              raise SystemExit("Không tìm thấy điểm kết thúc mảng projects trong index.html")
-                          return marker_start, semicolon + 1, html[array_start:array_end]
-              raise SystemExit("Không đọc hết được mảng projects trong index.html")
-
-
-          def extract_projects(html: str) -> list[dict]:
-              _, _, payload = locate_projects_block(html)
-              return json.loads(payload)
-
-
-          def replace_projects(html: str, projects: list[dict], data_date: str) -> str:
-              payload = json.dumps(projects, ensure_ascii=False, indent=6)
-              start, end, _ = locate_projects_block(html)
-              indent_match = re.search(r"(^[ \t]*)const projects =", html[: start + 30], re.M)
-              indent = indent_match.group(1) if indent_match else "    "
-              projects_block = indent + "const projects = " + ("\n" + indent).join(payload.splitlines()) + ";"
-              html = html[:start] + projects_block + html[end:]
-              html = re.sub(r'const dataUpdatedDate = "[^"]+";', f'const dataUpdatedDate = "{data_date}";', html)
-              return html
-          '''
+              lines = [
+                  'def locate_projects_block(html: str) -> tuple[int, int, str]:',
+                  '    """Find the JS projects array without depending on nearby constants."""',
+                  '    marker = "const projects ="',
+                  '    marker_start = html.find(marker)',
+                  '    if marker_start < 0:',
+                  '        raise SystemExit("Không tìm thấy mảng projects trong index.html")',
+                  '    array_start = html.find("[", marker_start)',
+                  '    if array_start < 0:',
+                  '        raise SystemExit("Không tìm thấy điểm bắt đầu mảng projects trong index.html")',
+                  '',
+                  '    depth = 0',
+                  '    quote = None',
+                  '    escaped = False',
+                  '    for pos in range(array_start, len(html)):',
+                  '        char = html[pos]',
+                  '        if quote:',
+                  '            if escaped:',
+                  '                escaped = False',
+                  '            elif char == chr(92):',
+                  '                escaped = True',
+                  '            elif char == quote:',
+                  '                quote = None',
+                  '            continue',
+                  '        if char in (\'"\', "\'"):',
+                  '            quote = char',
+                  '        elif char == "[":',
+                  '            depth += 1',
+                  '        elif char == "]":',
+                  '            depth -= 1',
+                  '            if depth == 0:',
+                  '                array_end = pos + 1',
+                  '                semicolon = html.find(";", array_end)',
+                  '                if semicolon < 0:',
+                  '                    raise SystemExit("Không tìm thấy điểm kết thúc mảng projects trong index.html")',
+                  '                return marker_start, semicolon + 1, html[array_start:array_end]',
+                  '    raise SystemExit("Không đọc hết được mảng projects trong index.html")',
+                  '',
+                  '',
+                  'def extract_projects(html: str) -> list[dict]:',
+                  '    _, _, payload = locate_projects_block(html)',
+                  '    return json.loads(payload)',
+                  '',
+                  '',
+                  'def replace_projects(html: str, projects: list[dict], data_date: str) -> str:',
+                  '    payload = json.dumps(projects, ensure_ascii=False, indent=6)',
+                  '    start, end, _ = locate_projects_block(html)',
+                  r'    indent_match = re.search(r"(^[ \t]*)const projects =", html[: start + 30], re.M)',
+                  '    indent = indent_match.group(1) if indent_match else "    "',
+                  r'    projects_block = indent + "const projects = " + ("\n" + indent).join(payload.splitlines()) + ";"',
+                  '    html = html[:start] + projects_block + html[end:]',
+                  r'    html = re.sub(r\'const dataUpdatedDate = "[^\"]+";\', f\'const dataUpdatedDate = "{data_date}";\', html)',
+                  '    return html',
+              ]
+              replacement = "\n".join(lines) + "\n\n"
               text, count = re.subn(
                   r"def extract_projects\(html: str\) -> list\[dict\]:\n.*?(?=\ndef block_for\(lines: list\[str\])",
-                  replacement + "\n\n",
+                  replacement,
                   text,
                   count=1,
                   flags=re.S,
