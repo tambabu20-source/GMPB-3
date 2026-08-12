@@ -1639,6 +1639,63 @@
       return parts.length ? `(${parts.join("; ")})` : "";
     }
 
+    function campaignAreaTextFromCurrent(currentArea) {
+      const current = parseClearedAmount(currentArea);
+      if (!current) return "";
+      return `(${formatAreaValue(Math.max(0, current.amount))} ${current.unit})`;
+    }
+
+    function campaignAreaTextByUnit(currentByUnit) {
+      const parts = Object.entries(currentByUnit || {})
+        .filter(([, amount]) => Number.isFinite(amount) && amount > 0)
+        .sort(([unitA], [unitB]) => unitA.localeCompare(unitB))
+        .map(([unit, amount]) => `${formatAreaValue(Math.max(0, amount))} ${unit}`);
+      return parts.length ? `(${parts.join("; ")})` : "";
+    }
+
+    const campaignProjectDelta = {
+      1: { text: "tăng 3,2% (0,4 km)", color: colors.weekUp },
+      2: { text: "tăng 8% (0,6 km)", color: colors.weekUp },
+      3: { text: "chưa phát sinh tăng (0 km)", color: colors.weekFlat },
+      4: { text: "tăng 15% (1,45 ha)", color: colors.weekUp },
+      5: { text: "tăng 21,6% (5,14 ha)", color: colors.weekUp },
+      6: { text: "tăng 14% (69,3055 ha)", color: colors.weekUp },
+      7: { text: "tăng 1,26% (0,52 ha)", color: colors.weekUp },
+      8: { text: "tăng 11,4% (0,7939 ha)", color: colors.weekUp }
+    };
+
+    const campaignLocalityDelta = {
+      "xã Ô Loan": { text: "không thay đổi (0 km)", color: colors.weekFlat },
+      "xã Tuy An Nam": { text: "tăng 2,2% (0,1 km)", color: colors.weekUp },
+      "phường Bình Kiến": { text: "tăng 11,97% (0,2741 km; 0,7939 ha)", color: colors.weekUp },
+      "phường Phú Yên": { text: "tăng 18,3% (6,59 ha)", color: colors.weekUp },
+      "xã Tuy An Đông": { text: "tăng 4% (0,6 km)", color: colors.weekUp },
+      "xã Hòa Xuân": { text: "tăng 7,63% (69,8255 ha)", color: colors.weekUp }
+    };
+
+    function campaignProgressMeta(current, areaText = "") {
+      if (!Number.isFinite(current)) return null;
+      const safeCurrent = Math.max(0, current);
+      const suffix = areaText ? ` ${areaText}` : "";
+      const color = safeCurrent > 0.05 ? colors.weekUp : colors.weekFlat;
+      return {
+        label: `So trước chiến dịch tăng ${formatPct(safeCurrent)}%${suffix}`,
+        color
+      };
+    }
+
+    function projectCampaignMeta(project) {
+      const delta = campaignProjectDelta[project.order];
+      if (delta) return { label: `So trước chiến dịch ${delta.text}`, color: delta.color };
+      return campaignProgressMeta(project.progress, campaignAreaTextFromCurrent(project.clearedArea));
+    }
+
+    function localityCampaignMeta(locality, current, rows) {
+      const delta = campaignLocalityDelta[locality];
+      if (delta) return { label: `So trước chiến dịch ${delta.text}`, color: delta.color };
+      return campaignProgressMeta(current, campaignAreaTextByUnit(aggregateClearedByUnit(rows)));
+    }
+
     function weeklyProgressMeta(current, baseline, areaText = "") {
       if (!showWeeklyDelta) return null;
       if (!Number.isFinite(current) || !Number.isFinite(baseline)) return null;
