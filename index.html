@@ -2125,9 +2125,13 @@
       const right = isMobile ? 20 : 70;
       const barW = width - left - right;
       const layouts = data.map(item => {
-        const detail = localityDetail(item.rows);
+        const detail = compactDetailLabel(localityDetail(item.rows));
         const titleLines = wrapSvgText(item.locality, isMobile ? 44 : 42).slice(0, 2);
-        const detailLines = wrapSvgText(`(${detail})`, isMobile ? 50 : 96).slice(0, isMobile ? 6 : 5);
+        const detailLine = oneLineText(`(${detail})`, isMobile ? 58 : 138);
+        const detailLines = detailLine ? [detailLine] : [];
+        const campaign = localityCampaignMeta(item.locality, item.progress, item.rowsForAverage);
+        const campaignLine = campaign ? oneLineText(compactCampaignLabel(campaign.label), isMobile ? 58 : 118) : "";
+        const campaignLines = campaignLine ? [campaignLine] : [];
         const week = weeklyProgressMeta(
           item.progress,
           weeklyLocalityProgress[item.locality],
