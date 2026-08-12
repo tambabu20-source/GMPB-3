@@ -1,15 +1,14 @@
-name: Cập nhật dashboard GPMB Tổ công tác số 3 hằng ngày
+name: Cap nhat dashboard GPMB To cong tac so 3 hang ngay
 
-on:
+'on':
   schedule:
-    # 16:00 hằng ngày theo giờ Việt Nam (UTC+7) = 09:00 UTC.
-    - cron: "0 9 * * *"
+    - cron: '0 9 * * *'
   workflow_dispatch:
   push:
     paths:
-      - ".github/workflows/daily-gpmb3-update.yml"
-      - "workflow-trigger.txt"
-      - "index.html"
+      - '.github/workflows/daily-gpmb3-update.yml'
+      - 'workflow-trigger.txt'
+      - 'index.html'
 
 concurrency:
   group: gpmb3-dashboard-update
@@ -22,87 +21,78 @@ jobs:
   update-dashboard:
     runs-on: ubuntu-latest
     steps:
-      - name: Lấy mã nguồn
+      - name: Lay ma nguon
         uses: actions/checkout@v4
 
-      - name: Cài Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Chốt số liệu, công thức và nhãn dashboard
+      - name: Chot so lieu va cong thuc dashboard
+        shell: python
         run: |
-          python - <<'PY'
           from pathlib import Path
           import re
 
-          path = Path("index.html")
-          text = path.read_text(encoding="utf-8")
-
+          path = Path('index.html')
+          text = path.read_text(encoding='utf-8')
           replacements = {
-              "So với trước chiến dịch": "So trước chiến dịch",
-              "So trước CĐ": "So trước chiến dịch",
+              'So với trước chiến dịch': 'So trước chiến dịch',
+              'So trước CĐ': 'So trước chiến dịch',
               '"xã Tuy An Đông": { text: "tăng 7,81% (0,6 km)", color: colors.weekUp }': '"xã Tuy An Đông": { text: "tăng 4% (0,6 km)", color: colors.weekUp }',
               '"xã Hòa Xuân": { text: "tăng 13,10% (69,8255 ha)", color: colors.weekUp }': '"xã Hòa Xuân": { text: "tăng 26,55% (69,8255 ha)", color: colors.weekUp }',
               '"xã Hòa Xuân": { text: "tăng 13,1% (69,8255 ha)", color: colors.weekUp }': '"xã Hòa Xuân": { text: "tăng 26,55% (69,8255 ha)", color: colors.weekUp }',
-              "578,25 ha + 29,62 km": "578,25 ha + 25,55 km",
-              "29,62 km + 578,25 ha": "578,25 ha + 25,55 km",
-              "381,77 ha + 28,18 km": "381,77 ha + 20,89 km",
-              "28,18 km + 381,77 ha": "381,77 ha + 20,89 km",
-              "79,57 ha + 0,99 km": "79,10 ha + 0,99 km",
-              "77,21 ha + 1,00 km": "79,10 ha + 0,99 km",
-              "1,00 km + 77,21 ha": "79,10 ha + 0,99 km",
+              '578,25 ha + 29,62 km': '578,25 ha + 25,55 km',
+              '29,62 km + 578,25 ha': '578,25 ha + 25,55 km',
+              '381,77 ha + 28,18 km': '381,77 ha + 20,89 km',
+              '28,18 km + 381,77 ha': '381,77 ha + 20,89 km',
+              '79,57 ha + 0,99 km': '79,10 ha + 0,99 km',
+              '77,21 ha + 1,00 km': '79,10 ha + 0,99 km',
+              '1,00 km + 77,21 ha': '79,10 ha + 0,99 km',
           }
           for old, new in replacements.items():
               text = text.replace(old, new)
 
-          text, count = re.subn(
-              r"    function weightedLocalityProgress\(rows\) \{\n.*?\n    \}\n\n    function normalizeLocalityName",
-              """    function weightedLocalityProgress(rows) {
+          fn = '''    function weightedLocalityProgress(rows) {
       const usable = rows.filter(row => row.progress > 0);
       const basis = usable.length ? usable : rows;
       if (!basis.length) return 0;
       return basis.reduce((sum, row) => sum + row.progress, 0) / basis.length;
     }
 
-    function normalizeLocalityName""",
+    function normalizeLocalityName'''
+          text, count = re.subn(
+              r'    function weightedLocalityProgress\(rows\) \{\n.*?\n    \}\n\n    function normalizeLocalityName',
+              fn,
               text,
               count=1,
               flags=re.S,
           )
           if count != 1:
-              raise SystemExit("Không tìm thấy hàm weightedLocalityProgress để khóa cách tính xã/phường")
+              raise SystemExit('Khong tim thay ham weightedLocalityProgress')
 
-          required = {
-              "Phú Yên nguồn 1": "90.06168609",
-              "Phú Yên nguồn 2": "93.90500210",
-              "Tuy An Đông delta": '"xã Tuy An Đông": { text: "tăng 4% (0,6 km)", color: colors.weekUp }',
-              "Hòa Xuân delta": '"xã Hòa Xuân": { text: "tăng 26,55% (69,8255 ha)", color: colors.weekUp }',
-              "Tổng phải GPMB": "578,25 ha + 25,55 km",
-              "Tổng đã GPMB": "381,77 ha + 20,89 km",
-              "Tổng trong chiến dịch": "79,10 ha + 0,99 km",
-              "Ẩn tuần qua": "const showWeeklyDelta = false;",
-          }
-          missing = [name for name, needle in required.items() if needle not in text]
+          required = [
+              '90.06168609',
+              '93.90500210',
+              '"xã Tuy An Đông": { text: "tăng 4% (0,6 km)", color: colors.weekUp }',
+              '"xã Hòa Xuân": { text: "tăng 26,55% (69,8255 ha)", color: colors.weekUp }',
+              '578,25 ha + 25,55 km',
+              '381,77 ha + 20,89 km',
+              '79,10 ha + 0,99 km',
+              'const showWeeklyDelta = false;',
+          ]
+          missing = [needle for needle in required if needle not in text]
           if missing:
-              raise SystemExit("Thiếu/chưa khớp: " + ", ".join(missing))
+              raise SystemExit('Thieu so lieu chot: ' + ', '.join(missing))
+          if 'So với trước chiến dịch' in text or 'So trước CĐ' in text:
+              raise SystemExit('Con cum so sanh sai')
+          path.write_text(text, encoding='utf-8')
+          print('Da chot so lieu va cong thuc dashboard.')
 
-          bad = [needle for needle in ["So với trước chiến dịch", "So trước CĐ"] if needle in text]
-          if bad:
-              raise SystemExit("Còn cụm sai: " + ", ".join(bad))
-
-          path.write_text(text, encoding="utf-8")
-          print("Đã chốt số liệu và công thức dashboard.")
-          PY
-
-      - name: Commit nếu có thay đổi
+      - name: Commit neu co thay doi
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
           if git diff --cached --quiet; then
-            echo "Không có thay đổi số liệu."
+            echo 'Khong co thay doi so lieu.'
           else
-            git commit -m "Chốt số liệu dashboard GPMB Tổ công tác số 3"
+            git commit -m 'Chot so lieu dashboard GPMB To cong tac so 3'
             git push
           fi
