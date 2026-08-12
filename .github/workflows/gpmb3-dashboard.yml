@@ -14,53 +14,48 @@ permissions:
   contents: write
 
 jobs:
-  check-and-patch:
+  patch-dashboard:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: true
-      - name: Patch dashboard numbers
+      - name: Patch and verify dashboard
         run: |
           python3 <<'PY'
           from pathlib import Path
           import re
           path = Path('index.html')
           text = path.read_text(encoding='utf-8')
-
-          text = text.replace('So với trước chiến dịch', 'So trước chiến dịch')
-          text = text.replace('So trước CĐ', 'So trước chiến dịch')
-
-          replacements = {
-              '578,25 ha + 29,62 km': '578,25 ha + 25,55 km',
-              '29,62 km + 578,25 ha': '578,25 ha + 25,55 km',
-              '381,77 ha + 28,18 km': '381,77 ha + 20,89 km',
-              '28,18 km + 381,77 ha': '381,77 ha + 20,89 km',
-              '77,21 ha + 1,00 km': '79,10 ha + 0,99 km',
-              '1,00 km + 77,21 ha': '79,10 ha + 0,99 km',
-              '79,57 ha + 0,99 km': '79,10 ha + 0,99 km',
-              '79,10 ha + 1,00 km': '79,10 ha + 0,99 km',
-              '63.54': '63.54',
-          }
-          for old, new in replacements.items():
+          text = text.replace('So với trước chiến dịch', 'So trước chiến dịch').replace('So trước CĐ', 'So trước chiến dịch')
+          pairs = [
+              ('578,25 ha + 29,62 km', '578,25 ha + 25,55 km'),
+              ('29,62 km + 578,25 ha', '578,25 ha + 25,55 km'),
+              ('381,77 ha + 28,18 km', '381,77 ha + 20,89 km'),
+              ('28,18 km + 381,77 ha', '381,77 ha + 20,89 km'),
+              ('77,21 ha + 1,00 km', '79,10 ha + 0,99 km'),
+              ('1,00 km + 77,21 ha', '79,10 ha + 0,99 km'),
+              ('79,57 ha + 0,99 km', '79,10 ha + 0,99 km'),
+              ('79,10 ha + 1,00 km', '79,10 ha + 0,99 km'),
+          ]
+          for old, new in pairs:
               text = text.replace(old, new)
-
           text = re.sub(r'"xã Tuy An Đông": \{ text: "tăng [^"]+", color: colors\.weekUp \}', '"xã Tuy An Đông": { text: "tăng 4% (0,6 km)", color: colors.weekUp }', text)
           text = re.sub(r'"phường Phú Yên": \{ text: "tăng [^"]+", color: colors\.weekUp \}', '"phường Phú Yên": { text: "tăng 22,09% (8,48 ha)", color: colors.weekUp }', text)
           text = re.sub(r'"xã Hòa Xuân": \{ text: "tăng [^"]+", color: colors\.weekUp \}', '"xã Hòa Xuân": { text: "tăng 26,55% (69,8255 ha)", color: colors.weekUp }', text)
-
-          func = '''function weightedLocalityProgress(rows) {
-      const usable = rows.filter(row => row.progress > 0);
-      const basis = usable.length ? usable : rows;
-      if (!basis.length) return 0;
-      return basis.reduce((sum, row) => sum + row.progress, 0) / basis.length;
-    }
-
-    function normalizeLocalityName'''
-          text, count = re.subn(r'function weightedLocalityProgress\(rows\) \{[\s\S]*?\n    \}\n\n    function normalizeLocalityName', func, text, count=1)
-          if count != 1:
-              raise SystemExit('Không tìm thấy hàm weightedLocalityProgress để thay thế')
-
+          func_lines = [
+              'function weightedLocalityProgress(rows) {',
+              '      const usable = rows.filter(row => row.progress > 0);',
+              '      const basis = usable.length ? usable : rows;',
+              '      if (!basis.length) return 0;',
+              '      return basis.reduce((sum, row) => sum + row.progress, 0) / basis.length;',
+              '    }',
+              '',
+              '    function normalizeLocalityName',
+          ]
+          text, n = re.subn(r'function weightedLocalityProgress\(rows\) \{[\s\S]*?\n    \}\n\n    function normalizeLocalityName', '\n'.join(func_lines), text, count=1)
+          if n != 1:
+              raise SystemExit('weightedLocalityProgress not patched')
           required = [
               '578,25 ha + 25,55 km',
               '381,77 ha + 20,89 km',
@@ -73,17 +68,14 @@ jobs:
               '60.77327343',
               'const showWeeklyDelta = false;',
           ]
-          missing = [s for s in required if s not in text]
+          missing = [item for item in required if item not in text]
           if missing:
-              raise SystemExit('Thiếu dữ liệu cần có: ' + repr(missing))
-          if 'So với trước chiến dịch' in text or 'So trước CĐ' in text:
-              raise SystemExit('Còn nhãn so sánh cũ')
-          if 'areaRows.length === basis.length' in text:
-              raise SystemExit('Còn cách tính xã/phường theo diện tích, chưa đúng cấu trúc cũ')
-
+              raise SystemExit('missing required data: ' + repr(missing))
+          if 'So với trước chiến dịch' in text or 'So trước CĐ' in text or 'areaRows.length === basis.length' in text:
+              raise SystemExit('old calculation or label still present')
           path.write_text(text, encoding='utf-8')
           PY
-      - name: Commit dashboard if needed
+      - name: Commit dashboard
         run: |
           if git diff --quiet -- index.html; then
             echo 'Dashboard already reconciled.'
@@ -94,11 +86,3 @@ jobs:
             git commit -m 'Reconcile public dashboard numbers'
             git push
           fi
-      - name: Final check
-        run: |
-          grep -q '578,25 ha + 25,55 km' index.html
-          grep -q '381,77 ha + 20,89 km' index.html
-          grep -q '79,10 ha + 0,99 km' index.html
-          grep -q 'tăng 26,55% (69,8255 ha)' index.html
-          grep -q 'showWeeklyDelta = false' index.html
-          echo 'Dashboard public data is reconciled.'
