@@ -2402,7 +2402,7 @@
       const layouts = data.map(item => {
         const titleLines = wrapSvgText(item.locality, isMobile ? 44 : 42).slice(0, 2);
         const totalLine = oneLineText(localityTotalCleared(item.rows), isMobile ? 44 : 70);
-        const currentDetailLines = wrapSvgText(localityProjectDetails(item.rows), isMobile ? 58 : 126).slice(0, 2);
+        const currentDetailLines = wrapSvgText(localityProjectDetails(item.rows), isMobile ? 58 : 150).slice(0, 2);
         const campaignBreakdown = campaignLocalityBreakdown[item.locality] || "";
         const campaignBreakdownLines = campaignBreakdown
           ? wrapSvgText(`(trong đó ${campaignBreakdown})`, isMobile ? 58 : 126).slice(0, 2)
