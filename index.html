@@ -2231,6 +2231,7 @@
         .replace(/đoạn phía Bắc cầu An Hải/i, "Bắc cầu An Hải")
         .replace(/Ven biển(?=đoạn)/i, "Ven biển ")
         .replace(/Ven biển\s+đoạn Xuân Đài\s*-\s*Tuy An Đông/i, "đoạn Xuân Đài")
+        .replace(/^Ven biển\s+đoạn Xuân Đài$/i, "đoạn Xuân Đài")
         .trim();
     }
 
@@ -2365,7 +2366,7 @@
           ? `${formatAreaValue(row.areaParts.cleared)} ${row.areaParts.unit}`
           : String(row.cleared || "").split("/")[0].trim();
         const progress = `${Number(row.progress || 0).toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%`;
-        return `${progress} - ${amount} - ${row.projectName}`;
+        return `${progress} - ${amount} - ${compactLocalityProjectName(row.projectName)}`;
       });
       if (!details.length) return "";
       return details.length > 1
