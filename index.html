@@ -2447,7 +2447,7 @@
           const dividerY = y + rowHeight - 22;
           return `<text x="18" y="${y}" font-size="12.8" fill="${colors.text}" font-weight="850">${title}</text><rect x="18" y="${barY}" width="372" height="18" rx="8" fill="#e7edf2"/><rect x="18" y="${barY}" width="${Math.max(4, progress / 100 * 372)}" height="18" rx="8" fill="${color}"/><text x="18" y="${barY + 36}" font-weight="800"><tspan font-size="14.2" fill="${color}">${percent}</tspan>${totalText}</text>${currentDetailText}${campaignText}${campaignBreakdownText}${weekText}<line x1="18" x2="402" y1="${dividerY}" y2="${dividerY}" stroke="#e7edf2" stroke-width="1"/>`;
         }
-        const title = titleLines.map((line, lineIndex) => `<tspan x="22" dy="${lineIndex ? 14 : 0}">${escapeHtml(line)}</tspan>`).join("");
+        const title = titleLines.map((line, lineIndex) => `<tspan x="170" dy="${lineIndex ? 14 : 0}">${escapeHtml(line)}</tspan>`).join("");
         const totalText = totalLine ? `<tspan dx="7" font-size="11.2" fill="${colors.text}" font-weight="750">${escapeHtml(totalLine)}</tspan>` : "";
         const currentDetailY = y + 36;
         const currentDetailText = currentDetailLines.length ? `<text x="${left}" y="${currentDetailY}" font-size="8.5" fill="${colors.muted}" font-weight="600">${currentDetailLines.map((line, lineIndex) => `<tspan x="${left}" dy="${lineIndex ? 9 : 0}">${escapeHtml(line)}</tspan>`).join("")}</text>` : "";
@@ -2457,7 +2457,7 @@
         const campaignBreakdownText = campaignBreakdownLines.length ? `<text x="${left}" y="${campaignBreakdownY}" font-size="8.4" fill="${colors.muted}" font-weight="600">${campaignBreakdownLines.map((line, lineIndex) => `<tspan x="${left}" dy="${lineIndex ? 9 : 0}">${escapeHtml(line)}</tspan>`).join("")}</text>` : "";
         const weekY = campaignY + (campaignLine ? 13 : 0) + campaignBreakdownLines.length * 9;
         const weekText = week ? `<text x="${left}" y="${weekY}" font-size="11" fill="${week.color}" font-weight="800">${escapeHtml(week.label)}</text>` : "";
-        return `<text x="22" y="${y}" font-size="14.5" fill="${colors.text}" font-weight="850">${title}</text><rect x="${left}" y="${y - 14}" width="${barW}" height="20" rx="8" fill="#e7edf2"/><rect x="${left}" y="${y - 14}" width="${fillW}" height="20" rx="8" fill="${color}"/><text x="${left}" y="${y + 24}" font-weight="800"><tspan font-size="14.2" fill="${color}">${percent}</tspan>${totalText}</text>${currentDetailText}${campaignText}${campaignBreakdownText}${weekText}`;
+        return `<text x="170" y="${y}" font-size="14.5" fill="${colors.text}" font-weight="850">${title}</text><rect x="${left}" y="${y - 14}" width="${barW}" height="20" rx="8" fill="#e7edf2"/><rect x="${left}" y="${y - 14}" width="${fillW}" height="20" rx="8" fill="${color}"/><text x="${left}" y="${y + 24}" font-weight="800"><tspan font-size="14.2" fill="${color}">${percent}</tspan>${totalText}</text>${currentDetailText}${campaignText}${campaignBreakdownText}${weekText}`;
       }).join("");
     }
 
