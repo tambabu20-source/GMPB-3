@@ -2344,12 +2344,20 @@
       return Array.from(byKey.values());
     }
 
-    function localityDetail(rows) {
-      return rows.map(row => {
-        const percent = row.progress.toLocaleString("vi-VN", { maximumFractionDigits: 2 });
-        const area = row.cleared ? ` ${row.cleared}` : "";
-        return `${percent}%${area} - ${row.projectName}`.replace(/Ven biển(?=đoạn)/i, "Ven biển ");
-      }).join("; ");
+    function localityTotalCleared(rows) {
+      const totals = aggregateClearedByUnit(rows);
+      return Object.entries(totals)
+        .sort(([unitA], [unitB]) => unitA === "ha" ? -1 : unitB === "ha" ? 1 : unitA.localeCompare(unitB))
+        .map(([unit, amount]) => `${formatAreaValue(amount)} ${unit}`)
+        .join(" + ");
+    }
+
+    function localityBreakdown(rows) {
+      if (rows.length < 2) return "";
+      return `trong đó ${rows.map(row => {
+        const amount = row.areaParts ? `${formatAreaValue(row.areaParts.cleared)} ${row.areaParts.unit}` : row.cleared;
+        return `${amount} ${row.projectName}`;
+      }).join("; ")}`.replace(/Ven biển(?=đoạn)/i, "Ven biển ");
     }
 
     function drawLocalityProgressChart() {
@@ -2378,9 +2386,12 @@
       const right = isMobile ? 20 : 70;
       const barW = width - left - right;
       const layouts = data.map(item => {
-        const detail = compactDetailLabel(localityDetail(item.rows));
         const titleLines = wrapSvgText(item.locality, isMobile ? 44 : 42).slice(0, 2);
-        const detailLine = oneLineText(`(${detail})`, isMobile ? 58 : 138);
+        const totalLine = oneLineText(localityTotalCleared(item.rows), isMobile ? 44 : 70);
+        const breakdown = localityBreakdown(item.rows);
+        const breakdownLines = breakdown
+          ? wrapSvgText(`(${breakdown})`, isMobile ? 58 : 126).slice(0, 2)
+          : [];
         const campaign = localityCampaignMeta(item.locality, item.progress, item.rowsForAverage);
         const campaignLine = campaign ? oneLineText(compactCampaignLabel(campaign.label), isMobile ? 58 : 118) : "";
         const week = weeklyProgressMeta(
@@ -2389,9 +2400,9 @@
           localityAreaDeltaText(aggregateClearedByUnit(item.rows), weeklyLocalityCleared[item.locality])
         );
         const rowHeight = isMobile
-          ? 126 + Math.max(0, titleLines.length - 1) * 17
-          : 76 + Math.max(0, titleLines.length - 1) * 13;
-        return { item, titleLines, detailLine, campaign, campaignLine, week, rowHeight };
+          ? 126 + breakdownLines.length * 12 + Math.max(0, titleLines.length - 1) * 17
+          : 76 + breakdownLines.length * 11 + Math.max(0, titleLines.length - 1) * 13;
+        return { item, titleLines, totalLine, breakdownLines, campaign, campaignLine, week, rowHeight };
       });
       let cursor = top;
       const positioned = layouts.map(layout => {
@@ -2401,7 +2412,7 @@
       });
       const height = cursor + (isMobile ? 24 : 12);
       fitSvgToViewBox(svg, width, height);
-      svg.innerHTML = positioned.map(({ item, titleLines, detailLine, campaign, campaignLine, week, y, rowHeight }) => {
+      svg.innerHTML = positioned.map(({ item, titleLines, totalLine, breakdownLines, campaign, campaignLine, week, y, rowHeight }) => {
         const progress = Math.max(0, Math.min(100, item.progress));
         const fillW = Math.max(4, progress / 100 * barW);
         const color = progress >= 99.95 ? colors.complete : progress >= 90 ? colors.public : progress >= 70 ? "#2f855a" : progress > 0 ? "#d97706" : colors.unknown;
@@ -2409,21 +2420,25 @@
         if (isMobile) {
           const title = titleLines.map((line, lineIndex) => `<tspan x="18" dy="${lineIndex ? 14 : 0}">${escapeHtml(line)}</tspan>`).join("");
           const barY = y + 28 + titleLines.length * 16;
-          const detailText = detailLine ? `<tspan dx="6" font-size="8.9" fill="${colors.muted}" font-weight="700">${escapeHtml(detailLine)}</tspan>` : "";
-          const campaignY = barY + 58;
+          const totalText = totalLine ? `<tspan dx="6" font-size="11.2" fill="${colors.text}" font-weight="750">${escapeHtml(totalLine)}</tspan>` : "";
+          const breakdownY = barY + 52;
+          const breakdownText = breakdownLines.length ? `<text x="18" y="${breakdownY}" font-size="8.7" fill="${colors.muted}" font-weight="600">${breakdownLines.map((line, lineIndex) => `<tspan x="18" dy="${lineIndex ? 11 : 0}">${escapeHtml(line)}</tspan>`).join("")}</text>` : "";
+          const campaignY = barY + 58 + breakdownLines.length * 11;
           const campaignText = campaignLine ? `<text x="18" y="${campaignY}" font-size="9.6" fill="${campaign.color}" font-weight="800">${escapeHtml(campaignLine)}</text>` : "";
           const weekY = campaignY + (campaignLine ? 15 : 0);
           const weekText = week ? `<text x="18" y="${weekY}" font-size="10.9" fill="${week.color}" font-weight="800">${escapeHtml(week.label)}</text>` : "";
           const dividerY = y + rowHeight - 22;
-          return `<text x="18" y="${y}" font-size="12.8" fill="${colors.text}" font-weight="850">${title}</text><rect x="18" y="${barY}" width="372" height="18" rx="8" fill="#e7edf2"/><rect x="18" y="${barY}" width="${Math.max(4, progress / 100 * 372)}" height="18" rx="8" fill="${color}"/><text x="18" y="${barY + 36}" font-weight="800"><tspan font-size="14.2" fill="${color}">${percent}</tspan>${detailText}</text>${campaignText}${weekText}<line x1="18" x2="402" y1="${dividerY}" y2="${dividerY}" stroke="#e7edf2" stroke-width="1"/>`;
+          return `<text x="18" y="${y}" font-size="12.8" fill="${colors.text}" font-weight="850">${title}</text><rect x="18" y="${barY}" width="372" height="18" rx="8" fill="#e7edf2"/><rect x="18" y="${barY}" width="${Math.max(4, progress / 100 * 372)}" height="18" rx="8" fill="${color}"/><text x="18" y="${barY + 36}" font-weight="800"><tspan font-size="14.2" fill="${color}">${percent}</tspan>${totalText}</text>${breakdownText}${campaignText}${weekText}<line x1="18" x2="402" y1="${dividerY}" y2="${dividerY}" stroke="#e7edf2" stroke-width="1"/>`;
         }
         const title = titleLines.map((line, lineIndex) => `<tspan x="22" dy="${lineIndex ? 14 : 0}">${escapeHtml(line)}</tspan>`).join("");
-        const detailText = detailLine ? `<tspan dx="6" font-size="9.6" fill="${colors.muted}" font-weight="700">${escapeHtml(detailLine)}</tspan>` : "";
-        const campaignY = y + 40;
+        const totalText = totalLine ? `<tspan dx="7" font-size="11.2" fill="${colors.text}" font-weight="750">${escapeHtml(totalLine)}</tspan>` : "";
+        const breakdownY = y + 40;
+        const breakdownText = breakdownLines.length ? `<text x="${left}" y="${breakdownY}" font-size="8.8" fill="${colors.muted}" font-weight="600">${breakdownLines.map((line, lineIndex) => `<tspan x="${left}" dy="${lineIndex ? 10 : 0}">${escapeHtml(line)}</tspan>`).join("")}</text>` : "";
+        const campaignY = y + 40 + breakdownLines.length * 11;
         const campaignText = campaignLine ? `<text x="${left}" y="${campaignY}" font-size="9.9" fill="${campaign.color}" font-weight="800">${escapeHtml(campaignLine)}</text>` : "";
         const weekY = campaignY + (campaignLine ? 13 : 0);
         const weekText = week ? `<text x="${left}" y="${weekY}" font-size="11" fill="${week.color}" font-weight="800">${escapeHtml(week.label)}</text>` : "";
-        return `<text x="22" y="${y}" font-size="14.5" fill="${colors.text}" font-weight="850">${title}</text><rect x="${left}" y="${y - 14}" width="${barW}" height="20" rx="8" fill="#e7edf2"/><rect x="${left}" y="${y - 14}" width="${fillW}" height="20" rx="8" fill="${color}"/><text x="${left}" y="${y + 24}" font-weight="800"><tspan font-size="14.2" fill="${color}">${percent}</tspan>${detailText}</text>${campaignText}${weekText}`;
+        return `<text x="22" y="${y}" font-size="14.5" fill="${colors.text}" font-weight="850">${title}</text><rect x="${left}" y="${y - 14}" width="${barW}" height="20" rx="8" fill="#e7edf2"/><rect x="${left}" y="${y - 14}" width="${fillW}" height="20" rx="8" fill="${color}"/><text x="${left}" y="${y + 24}" font-weight="800"><tspan font-size="14.2" fill="${color}">${percent}</tspan>${totalText}</text>${breakdownText}${campaignText}${weekText}`;
       }).join("");
     }
 
