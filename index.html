@@ -2364,7 +2364,8 @@
         const amount = row.areaParts
           ? `${formatAreaValue(row.areaParts.cleared)} ${row.areaParts.unit}`
           : String(row.cleared || "").split("/")[0].trim();
-        return `${amount} - ${row.projectName}`;
+        const progress = `${Number(row.progress || 0).toLocaleString("vi-VN", { maximumFractionDigits: 2 })}%`;
+        return `${progress} - ${amount} - ${row.projectName}`;
       });
       if (!details.length) return "";
       return details.length > 1
